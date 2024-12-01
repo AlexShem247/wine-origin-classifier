@@ -1,0 +1,14 @@
+# Windows system files
+desktop.ini
+
+# Temporary files
+~$*
+
+# IDE files
+.idea/
+
+# Python bytecode cache
+__pycache__/
+
+# Other files
+Assignment.pdf
