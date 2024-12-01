@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import plot_tree
 
@@ -63,38 +63,23 @@ class WineOriginClassifier:
 
     def hyperparameter_tuning(self):
         """Tune hyperparameters for max_depth and n_estimators."""
-        # Define the parameter grid for max_depth and n_estimators
         param_grid = {
             "n_estimators": [100, 200, 300, 500, 700],
             "max_depth": [10, 20, 30, 40, 50]
         }
 
-        best_score = 0
-        best_params = {}
+        clf = RandomForestClassifier(random_state=42)
 
-        # Loop over possible parameter combinations
-        for n_estimators in param_grid["n_estimators"]:
-            for max_depth in param_grid["max_depth"]:
-                # Initialise the model with current hyperparameters
-                clf = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth, random_state=42)
+        # Perform grid search with cross-validation
+        grid_search = GridSearchCV(clf, param_grid, cv=5, scoring="f1_weighted", n_jobs=-1)
+        grid_search.fit(self.X_train, self.y_train)
 
-                # Split the data into train and validation sets (using the train set only)
-                X_train, X_val, y_train, y_val = train_test_split(self.X_train, self.y_train, test_size=0.1,
-                                                                  random_state=42)
-
-                # Train the model
-                clf.fit(X_train, y_train)
-
-                # Evaluate on the validation set
-                score = clf.score(X_val, y_val)
-
-                # Keep track of the best score and parameters
-                if score > best_score:
-                    best_score = score
-                    best_params = {"n_estimators": n_estimators, "max_depth": max_depth}
+        # Get the best parameters and score
+        best_params = grid_search.best_params_
+        best_score = grid_search.best_score_
 
         print(f"Best Hyperparameters: {best_params}")
-        print(f"Best Validation Accuracy: {best_score:.2f}")
+        print(f"Best Cross-Validation Accuracy: {best_score:.2f}")
 
         return best_params["n_estimators"], best_params["max_depth"]
 
