@@ -1,21 +1,26 @@
-import pandas as pd
-from sklearn.preprocessing import LabelEncoder
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report, f1_score
-
 import matplotlib.pyplot as plt
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import plot_tree
 
 
 class WineOriginClassifier:
     def __init__(self, data_path):
-        # Initialize with the path to the CSV file
+        # Initialise with the path to the CSV file
         self.data_path = data_path
         self.df = None
+        self.country_lookup = None
+
         self.X = None
         self.y = None
-        self.country_lookup = None
+        self.X_train = None
+        self.X_test = None
+        self.y_train = None
+        self.y_test = None
+
+        self.random_forest = None
 
     def load_data(self):
         """Load the data from the CSV file."""
@@ -27,7 +32,7 @@ class WineOriginClassifier:
             return None
 
     def preprocess_data(self):
-        """Preprocess the data: handle missing values and encode categorical features."""
+        """Preprocess the data: encodes categorical features and splits data for training and testing."""
         if self.df is None:
             print("Data not loaded. Please load the data first.")
             return None
@@ -50,42 +55,70 @@ class WineOriginClassifier:
         self.country_lookup = dict(zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_)))
 
         print("Data preprocessing completed.")
-        return self.X, self.y
 
-    def show_data_info(self):
-        """Print out basic information about the data."""
-        if self.df is not None:
-            print(self.df.info())
-            print(self.df.head())
+        # Split data for training and testing
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size=0.1,
+                                                                                random_state=42)
+        return self.X_train, self.X_test
 
-    def train_decision_tree(self, max_depth=None):
-        # Split the data into train and test sets
-        X_train, X_test, y_train, y_test = train_test_split(self.X, self.y, test_size=0.2, random_state=42)
+    def hyperparameter_tuning(self):
+        """Tune hyperparameters for max_depth and n_estimators."""
+        # Define the parameter grid for max_depth and n_estimators
+        param_grid = {
+            "n_estimators": [100, 200, 300, 500, 700],
+            "max_depth": [10, 20, 30, 40, 50]
+        }
 
-        # Initialize and train the decision tree classifier
-        clf = DecisionTreeClassifier(max_depth=max_depth, random_state=42)
-        clf.fit(X_train, y_train)
+        best_score = 0
+        best_params = {}
 
-        # Predict on the test set
-        y_pred = clf.predict(X_test)
+        # Loop over possible parameter combinations
+        for n_estimators in param_grid["n_estimators"]:
+            for max_depth in param_grid["max_depth"]:
+                # Initialise the model with current hyperparameters
+                clf = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth, random_state=42)
 
-        # Print metrics
-        print(f"Accuracy: {accuracy_score(y_test, y_pred):.2f}")
-        print("Classification Report:")
-        print(classification_report(y_test, y_pred, zero_division=0))
+                # Split the data into train and validation sets (using the train set only)
+                X_train, X_val, y_train, y_val = train_test_split(self.X_train, self.y_train, test_size=0.1,
+                                                                  random_state=42)
 
-        weighted_f1 = f1_score(y_test, y_pred, average='weighted')
-        print("Weighted F1-Score:", weighted_f1)
+                # Train the model
+                clf.fit(X_train, y_train)
+
+                # Evaluate on the validation set
+                score = clf.score(X_val, y_val)
+
+                # Keep track of the best score and parameters
+                if score > best_score:
+                    best_score = score
+                    best_params = {"n_estimators": n_estimators, "max_depth": max_depth}
+
+        print(f"Best Hyperparameters: {best_params}")
+        print(f"Best Validation Accuracy: {best_score:.2f}")
+
+        return best_params["n_estimators"], best_params["max_depth"]
+
+    def train_random_forest(self, n_estimators=100, max_depth=None):
+        """Train Random Forest with specified hyperparameters."""
+        clf = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth, random_state=42)
+
+        # Train the model on the whole training data
+        clf.fit(self.X_train, self.y_train)
 
         # Save the trained model as a class field
-        self.decision_tree = clf
+        self.random_forest = clf
+
+        # Test the model on the final test set
+        test_score = clf.score(self.X_test, self.y_test)
+        print(f"Test Accuracy: {test_score:.2f}")
 
         return clf
 
-    def visualize_tree(self):
+    def visualise_tree(self, tree_index=0):
+        """Visualise one tree from the random forest (by default the first tree)."""
         plt.figure(figsize=(12, 8))  # Adjust size for readability
-        plot_tree(self.decision_tree, feature_names=self.X.columns, class_names=[str(c) for c in
-                                                                                 self.country_lookup.keys()],
+        plot_tree(self.random_forest.estimators_[tree_index],
+                  feature_names=self.X.columns, class_names=[str(c) for c in self.country_lookup.keys()],
                   filled=True)
         plt.show()
 
@@ -97,5 +130,12 @@ if __name__ == "__main__":
 
     wine_data.load_data()
     X, y = wine_data.preprocess_data()
-    wine_data.train_decision_tree(max_depth=10)
-    wine_data.visualize_tree()
+
+    # Hyperparameter tuning to improve the model
+    params = wine_data.hyperparameter_tuning()
+
+    # Train the model again with the best hyperparameters
+    wine_data.train_random_forest(*params)
+
+    # Visualise one tree from the forest
+    wine_data.visualise_tree()
