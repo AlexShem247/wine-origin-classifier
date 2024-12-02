@@ -1,10 +1,11 @@
 import graphviz
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import export_graphviz
+from textblob import TextBlob
 
 
 class WineOriginClassifier:
@@ -46,15 +47,19 @@ class WineOriginClassifier:
                            for col in self.df.columns]
         self.df = self.df.map(lambda x: 1 if x is True else (0 if x is False else x))
 
-        # Drop the "description" column since we are focusing on it
+        # Drop the "description" column for sentiment analysis
         descriptions = self.df.pop("description")
 
-        # Apply Bag of Words on "description" column to create new columns like "desc_{word}"
-        vectorizer = CountVectorizer(stop_words="english", max_features=500)
-        X_desc = vectorizer.fit_transform(descriptions)
+        # Apply sentiment analysis to the descriptions
+        self.df["sentiment_polarity"] = descriptions.apply(self.get_sentiment_polarity)
+        self.df["sentiment_subjectivity"] = descriptions.apply(self.get_sentiment_subjectivity)
 
-        # Get the feature names and create new column names for descriptions
-        desc_columns = [f"desc_{word}" for word in vectorizer.get_feature_names_out()]
+        # Apply TF-IDF Vectorization on "description" column
+        tfidf_vectorizer = TfidfVectorizer(stop_words="english", max_features=500)
+        X_desc = tfidf_vectorizer.fit_transform(descriptions)
+
+        # Get the feature names and create new column names for descriptions (e.g., "desc_{word}")
+        desc_columns = [f"desc_{word}" for word in tfidf_vectorizer.get_feature_names_out()]
 
         # Convert the sparse matrix to a dense DataFrame and set the column names
         X_desc_df = pd.DataFrame(X_desc.toarray(), columns=desc_columns)
@@ -62,6 +67,7 @@ class WineOriginClassifier:
         # Concatenate the new description features with the other features (price, points, variety)
         self.df = pd.concat([self.df, X_desc_df], axis=1)
 
+        # Define features (X) and target (y)
         self.X = self.df[["price", "points"] + [col for col in self.df if col.startswith("variety_")] + desc_columns]
 
         # Label encode the target variable and create country lookup dictionary
@@ -75,6 +81,14 @@ class WineOriginClassifier:
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size=0.1,
                                                                                 random_state=42)
         return self.X_train, self.X_test
+
+    def get_sentiment_polarity(self, text):
+        """Returns the sentiment polarity of the given text."""
+        return TextBlob(text).sentiment.polarity  # Ranges from -1 (negative) to 1 (positive)
+
+    def get_sentiment_subjectivity(self, text):
+        """Returns the subjectivity score of the given text."""
+        return TextBlob(text).sentiment.subjectivity  # Ranges from 0 (objective) to 1 (subjective)
 
     def hyperparameter_tuning(self, skip=False):
         """Tune hyperparameters for max_depth and n_estimators."""
@@ -148,4 +162,4 @@ if __name__ == "__main__":
     wine_data.train_random_forest(*params)
 
     # Visualise one tree from the forest
-    # wine_data.visualise_tree()
+    wine_data.visualise_tree()

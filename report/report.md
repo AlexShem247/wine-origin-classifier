@@ -22,3 +22,23 @@ Bag of words
 72 % without stop words
 78 % with stop words
 
+TF-IDF Vectorisation
+79 % with stop words
+
+Sentiment analysis
+
+79 % - had no effect
+152 neg
+837 pos
+11 neu
+
+"From a site near Annapolis, this wine shows a preponderance of dark grape and cherry flavor interwoven with cinnamon
+and black peppercorn. Light-bodied and ethereally layered, it has touches of rustic earthiness and leather."
+Is considered negative
+
+
+LLM Usage
+1: Asking LLM to predict based on desc + details without local model
+2: Applying TF-IDF Vectorisation, but using Named Entity Recognition (NER) (to reduce the features to context relevant ones)
+3: Extract specific features (could be missing) and performing RF
+
