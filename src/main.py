@@ -1,9 +1,10 @@
-import matplotlib.pyplot as plt
+import graphviz
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import LabelEncoder
-from sklearn.tree import plot_tree
+from sklearn.tree import export_graphviz
 
 
 class WineOriginClassifier:
@@ -45,9 +46,23 @@ class WineOriginClassifier:
                            for col in self.df.columns]
         self.df = self.df.map(lambda x: 1 if x is True else (0 if x is False else x))
 
-        # Drop unused column and separate features and target
-        self.df.drop(columns=["description"], inplace=True)
-        self.X = self.df[["price", "points"] + [col for col in self.df if col.startswith("variety_")]]
+        # Drop the "description" column since we are focusing on it
+        descriptions = self.df.pop("description")
+
+        # Apply Bag of Words on "description" column to create new columns like "desc_{word}"
+        vectorizer = CountVectorizer(stop_words="english", max_features=500)
+        X_desc = vectorizer.fit_transform(descriptions)
+
+        # Get the feature names and create new column names for descriptions
+        desc_columns = [f"desc_{word}" for word in vectorizer.get_feature_names_out()]
+
+        # Convert the sparse matrix to a dense DataFrame and set the column names
+        X_desc_df = pd.DataFrame(X_desc.toarray(), columns=desc_columns)
+
+        # Concatenate the new description features with the other features (price, points, variety)
+        self.df = pd.concat([self.df, X_desc_df], axis=1)
+
+        self.X = self.df[["price", "points"] + [col for col in self.df if col.startswith("variety_")] + desc_columns]
 
         # Label encode the target variable and create country lookup dictionary
         label_encoder = LabelEncoder()
@@ -61,12 +76,15 @@ class WineOriginClassifier:
                                                                                 random_state=42)
         return self.X_train, self.X_test
 
-    def hyperparameter_tuning(self):
+    def hyperparameter_tuning(self, skip=False):
         """Tune hyperparameters for max_depth and n_estimators."""
         param_grid = {
             "n_estimators": [100, 200, 300, 500, 700],
             "max_depth": [10, 20, 30, 40, 50]
         }
+
+        if skip:
+            return param_grid["n_estimators"][4], param_grid["max_depth"][3]
 
         clf = RandomForestClassifier(random_state=42)
 
@@ -99,13 +117,20 @@ class WineOriginClassifier:
 
         return clf
 
-    def visualise_tree(self, tree_index=0):
+    def visualise_tree(self, tree_index=0, max_depth=3):
         """Visualise one tree from the random forest (by default the first tree)."""
-        plt.figure(figsize=(12, 8))  # Adjust size for readability
-        plot_tree(self.random_forest.estimators_[tree_index],
-                  feature_names=self.X.columns, class_names=[str(c) for c in self.country_lookup.keys()],
-                  filled=True)
-        plt.show()
+        dot_data = export_graphviz(self.random_forest.estimators_[tree_index],
+                                   feature_names=self.X.columns,
+                                   class_names=[str(c) for c in self.country_lookup.keys()],
+                                   filled=True, rounded=True,
+                                   special_characters=True,
+                                   max_depth=max_depth)
+
+        # Create the Graphviz source object
+        graph = graphviz.Source(dot_data)
+
+        # Render and display the tree
+        graph.render(filename="random_forest_tree", view=True)
 
 
 if __name__ == "__main__":
@@ -117,10 +142,10 @@ if __name__ == "__main__":
     X, y = wine_data.preprocess_data()
 
     # Hyperparameter tuning to improve the model
-    params = wine_data.hyperparameter_tuning()
+    params = wine_data.hyperparameter_tuning(skip=True)
 
     # Train the model again with the best hyperparameters
     wine_data.train_random_forest(*params)
 
     # Visualise one tree from the forest
-    wine_data.visualise_tree()
+    # wine_data.visualise_tree()

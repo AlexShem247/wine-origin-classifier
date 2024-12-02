@@ -18,3 +18,7 @@ Imbalance of data
 For metric, I will use weighted F1-score as it (takes the class imbalance into account by weighting each class's
 F1-score by its proportion of samples in the dataset.)
 
+Bag of words
+72 % without stop words
+78 % with stop words
+
