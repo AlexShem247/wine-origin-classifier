@@ -5,7 +5,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import export_graphviz
-from textblob import TextBlob
 
 
 class WineOriginClassifier:
@@ -47,12 +46,8 @@ class WineOriginClassifier:
                            for col in self.df.columns]
         self.df = self.df.map(lambda x: 1 if x is True else (0 if x is False else x))
 
-        # Drop the "description" column for sentiment analysis
+        # Drop "description" column since we are focusing on it
         descriptions = self.df.pop("description")
-
-        # Apply sentiment analysis to the descriptions
-        self.df["sentiment_polarity"] = descriptions.apply(self.get_sentiment_polarity)
-        self.df["sentiment_subjectivity"] = descriptions.apply(self.get_sentiment_subjectivity)
 
         # Apply TF-IDF Vectorization on "description" column
         tfidf_vectorizer = TfidfVectorizer(stop_words="english", max_features=500)
@@ -81,14 +76,6 @@ class WineOriginClassifier:
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size=0.1,
                                                                                 random_state=42)
         return self.X_train, self.X_test
-
-    def get_sentiment_polarity(self, text):
-        """Returns the sentiment polarity of the given text."""
-        return TextBlob(text).sentiment.polarity  # Ranges from -1 (negative) to 1 (positive)
-
-    def get_sentiment_subjectivity(self, text):
-        """Returns the subjectivity score of the given text."""
-        return TextBlob(text).sentiment.subjectivity  # Ranges from 0 (objective) to 1 (subjective)
 
     def hyperparameter_tuning(self, skip=False):
         """Tune hyperparameters for max_depth and n_estimators."""
@@ -162,4 +149,4 @@ if __name__ == "__main__":
     wine_data.train_random_forest(*params)
 
     # Visualise one tree from the forest
-    wine_data.visualise_tree()
+    # wine_data.visualise_tree()

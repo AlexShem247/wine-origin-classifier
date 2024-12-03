@@ -42,3 +42,6 @@ LLM Usage
 2: Applying TF-IDF Vectorisation, but using Named Entity Recognition (NER) (to reduce the features to context relevant ones)
 3: Extract specific features (could be missing) and performing RF
 
+1: LMM without local model:
+Overall Accuracy: 72.80% (728/1000 correct)
+

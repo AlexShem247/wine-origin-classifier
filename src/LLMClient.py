@@ -1,3 +1,5 @@
+from time import sleep
+
 import requests
 
 
@@ -7,6 +9,8 @@ class LLMClientError(Exception):
 
 
 class LLMClient:
+    MAX_RETRIES = 5
+
     def __init__(self, api_key, url="https://candidate-llm.extraction.artificialos.com/v1/chat/completions"):
         self.api_key = api_key
         self.url = url
@@ -16,27 +20,41 @@ class LLMClient:
         }
 
     def get_response(self, prompt, model="gpt-4o-mini", temperature=0.7):
-        # Define the request payload
-        data = {
-            "model": model,
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": temperature
-        }
+        """Send a prompt to the LLM and get a response with retry logic for rate limits."""
+        retry_count = 0  # Counter for retries
 
-        # Make the POST request
-        response = requests.post(self.url, headers=self.headers, json=data)
+        while retry_count < self.MAX_RETRIES:
+            # Define the request payload
+            data = {
+                "model": model,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": temperature
+            }
 
-        # Check if the response was successful
-        if response.status_code != 200:
-            raise LLMClientError(f"Error {response.status_code}: {response.text}")
+            # Make the POST request
+            response = requests.post(self.url, headers=self.headers, json=data)
 
-        response_json = response.json()
+            # Check if the response was successful
+            if response.status_code == 200:
+                response_json = response.json()
 
-        # Check if the response contains the expected fields
-        choices = response_json.get("choices")
-        if not choices or "message" not in choices[0]:
-            raise LLMClientError("Invalid response format: Missing 'choices' or 'message'.")
+                # Validate response structure
+                choices = response_json.get("choices")
+                if not choices or "message" not in choices[0]:
+                    raise LLMClientError("Invalid response format: Missing 'choices' or 'message'.")
 
-        # Extract the assistant's message
-        assistant_message = choices[0]["message"].get("content", "No response")
-        return assistant_message
+                # Extract and return the assistant's message
+                assistant_message = choices[0]["message"].get("content", "No response")
+                return assistant_message
+
+            # Handle rate limit error (429 Too Many Requests)
+            elif response.status_code == 429:
+                retry_count += 1
+                sleep(1)
+
+                # Handle other errors
+            else:
+                raise LLMClientError(f"Error {response.status_code}: {response.text}")
+
+        # If all retries fail, raise an exception
+        raise LLMClientError(f"Failed after {self.MAX_RETRIES} retries due to rate limits.")
