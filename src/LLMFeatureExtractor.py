@@ -12,9 +12,40 @@ from src.LLMClient import LLMClient
 PROMPT_MAX_ATTEMPTS = 5
 RESPONSE_DELAY = 1
 
+WINE_FEATURES = {
+    "Fruity Favour": ["berry", "citrus", "apple", "peach", "plum", "tropical fruit"],
+    "Spicy Favour": ["pepper", "cinnamon", "nutmeg", "clove"],
+    "Earthy Favour": ["mushroom", "forest floor", "truffle", "soil", "leather"],
+    "Floral Favour": ["rose", "violet", "jasmine", "honeysuckle"],
+    "Oaky Favour": ["oak", "vanilla", "toast", "smoke"],
+    "Nutty Favour": ["almond", "hazelnut", "walnut"],
+    "Herbal Favour": ["mint", "eucalyptus", "sage", "rosemary"],
+    "Mineral Favour": ["flint", "slate", "chalk", "saline"],
+    "Sweet Favour": ["honey", "caramel", "molasses"],
+
+    "Body (Weight/Texture)": ["light-bodied", "medium-bodied", "full-bodied", "creamy", "silky", "tannic"],
+    "Acidity": ["high acidity", "medium acidity", "low acidity", "crisp", "zesty"],
+    "Sweetness Level": ["bone dry", "dry", "off-dry", "sweet", "very sweet"],
+    "Alcohol Level (Perception)": ["light", "medium", "high", "hot (overly alcoholic)"],
+    "Ageability": ["ready to drink", "needs aging", "long-term aging potential", "over the hill (past its prime)"],
+    "Food Pairing / Occasions": [
+        "dinner", "casual", "celebration", "aperitif", "barbecue",
+        "cheese pairing", "dessert pairing", "seafood pairing"
+    ],
+    "Tannins": ["low tannins", "medium tannins", "high tannins", "smooth", "velvety", "chewy"],
+    "Region/Terroir": ["mineral", "volcanic", "coastal", "mountain"],
+    "Color": ["pale", "deep", "ruby", "garnet", "golden", "straw", "amber"],
+    "Finish": ["short", "medium", "long", "complex", "crisp", "smooth"],
+    "Aging Method": ["stainless steel", "oak barrel", "neutral barrel", "concrete", "amphora", "no oak"],
+    "Climate Characteristics": ["cool climate", "warm climate", "hot climate", "dry", "humid"],
+    "Intensity/Aroma": ["subtle", "pronounced", "intense", "muted"],
+    "Style": ["traditional", "modern", "natural", "organic", "biodynamic"],
+    "Unique/Standout Notes": ["smoky", "meaty", "salty", "exotic", "perfumed", "zesty"]
+}
+
 
 class LLMFeatureExtractor:
-    def __init__(self, llm_client, file_path: str, output_file: str, external_words_file: str):
+    def __init__(self, llm_client, file_path: str, output_file: str, external_words_file: str = ""):
         """Initializes the feature extractor with the LLM client and file paths."""
         self.llm_client = llm_client
         self.file_path = file_path
@@ -23,6 +54,88 @@ class LLMFeatureExtractor:
 
         # Load data from the CSV
         self.df = pd.read_csv(self.file_path)
+
+    def feature_extraction(self):
+        """Extract features from wine descriptions using the LLM and append results to the output CSV."""
+        if self.df is None:
+            raise ValueError("Data not loaded properly.")
+
+        # Create the output CSV file if it doesn't exist
+        feature_columns = ["id", "country", "description"] + list(WINE_FEATURES.keys())
+        if not os.path.exists(self.output_file):
+            with open(self.output_file, mode="w", newline='', encoding='utf-8') as f:
+                writer = pd.DataFrame(columns=feature_columns)
+                writer.to_csv(f, index=False)
+
+        # Load already processed IDs
+        processed_ids = set()
+        if os.path.exists(self.output_file):
+            processed_data = pd.read_csv(self.output_file)
+            if "id" in processed_data.columns:
+                processed_ids = set(processed_data["id"])
+
+        # Iterate through rows in the DataFrame
+        idx: int
+        for idx, row in self.df.iterrows():
+            wine_id = row["id"]
+
+            # Skip rows already processed
+            if wine_id in processed_ids:
+                continue
+
+            # Initialize a dictionary to store extracted features for this row
+            extracted_features = {"id": wine_id, "country": row["country"], "description": row["description"]}
+
+            # Process each feature in WINE_FEATURES
+            for feature, categories in WINE_FEATURES.items():
+                attempts = 0
+                feature_value = None
+
+                while attempts < PROMPT_MAX_ATTEMPTS:
+                    # Construct the prompt
+                    prompt = (
+                        f"From the following wine description, determine which category the wine belongs to for "
+                        "'{feature}':\n"
+                        f"Description: '{row['description']}'.\n"
+                        f"Possible categories: {categories}.\n"
+                        f"If the description does not contain information relevant to '{feature}', respond with "
+                        f"'NULL' otherwise response with a single word."
+                    )
+
+                    # Get the LLM's response
+                    response = self.llm_client.get_response(prompt).strip()
+
+                    # Validate the response
+                    if response in categories or response == "NULL":
+                        feature_value = response if response != "NULL" else ""
+                        break  # Valid response received, exit retry loop
+                    else:
+                        print(
+                            f"Invalid response: '{response}' for feature '{feature}'. Retrying... ({attempts + 1}/"
+                            f"{PROMPT_MAX_ATTEMPTS})")
+                        attempts += 1
+                        sleep(RESPONSE_DELAY)
+
+                # Handle the case where no valid response was received
+                if feature_value is None:
+                    print(f"Failed to extract '{feature}' for wine ID {wine_id}. Setting it as empty.")
+                    feature_value = ""
+
+                # Save the feature value
+                extracted_features[feature] = feature_value
+
+            # Append the extracted features to the CSV
+            with open(self.output_file, mode="a", newline="", encoding="utf-8") as f:
+                writer = pd.DataFrame([extracted_features])
+                writer.to_csv(f, header=False, index=False)
+
+            # Print progress
+            current_progress = idx + 1
+            total_rows = len(self.df)
+            print(f"Processed {current_progress}/{total_rows} rows ({(current_progress / total_rows) * 100:.2f}%)")
+
+            # Sleep to respect API rate limits
+            sleep(RESPONSE_DELAY)
 
     def text_vectorisation(self):
         """Performs LLM-based feature extraction and vectorises text descriptions."""
@@ -131,6 +244,5 @@ if __name__ == "__main__":
 
     llm = LLMClient(api_key=sys.argv[1])
     lfe = LLMFeatureExtractor(llm, file_path="../data/wine_quality_1000.csv",
-                              output_file="../output/wine_quality_features+_1000.csv",
-                              external_words_file="../output/wine_features_1000.csv")
-    lfe.text_vectorisation()
+                              output_file="../output/wine_quality_more_features_1000.csv")
+    lfe.feature_extraction()

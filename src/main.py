@@ -1,7 +1,6 @@
 import graphviz
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import export_graphviz
@@ -38,37 +37,24 @@ class WineOriginClassifier:
             print("Data not loaded. Please load the data first.")
             return None
 
-        # Apply one-hot encoding
-        self.df = pd.get_dummies(self.df, columns=["variety"], drop_first=True)
+        # Identify non-numerical columns (excluding 'description' which is already dropped)
+        countries = self.df.pop("country")
+        non_numerical_cols = self.df.select_dtypes(include=["object"]).columns.tolist()
+        non_numerical_cols.remove("description")  # 'description' is dropped already
+
+        # Apply one-hot encoding on non-numerical columns
+        self.df = pd.get_dummies(self.df, columns=non_numerical_cols, drop_first=True)
 
         # Clean column names and convert boolean columns to 0 and 1
         self.df.columns = [col.lower().replace(" ", "_").encode("ascii", "ignore").decode("ascii")
                            for col in self.df.columns]
-        self.df = self.df.map(lambda x: 1 if x is True else (0 if x is False else x))
 
-        # Drop "description" column since we are focusing on it
-        descriptions = self.df.pop("description")
-
-        # Apply TF-IDF Vectorization on "description" column
-        # tfidf_vectorizer = TfidfVectorizer(stop_words="english", max_features=500)
-        # X_desc = tfidf_vectorizer.fit_transform(descriptions)
-        #
-        # # Get the feature names and create new column names for descriptions (e.g., "desc_{word}")
-        # desc_columns = [f"desc_{word}" for word in tfidf_vectorizer.get_feature_names_out()]
-        #
-        # # Convert the sparse matrix to a dense DataFrame and set the column names
-        # X_desc_df = pd.DataFrame(X_desc.toarray(), columns=desc_columns)
-        #
-        # # Concatenate the new description features with the other features (price, points, variety)
-        # self.df = pd.concat([self.df, X_desc_df], axis=1)
-
-        # Define features (X) and target (y)
-        #self.X = self.df[["price", "points"] + [col for col in self.df if col.startswith("variety_")] + desc_columns]
-        self.X = self.df.drop(columns=["id", "country"])
+        # Define features and target
+        self.X = self.df.drop(columns=["id", "description"])
 
         # Label encode the target variable and create country lookup dictionary
         label_encoder = LabelEncoder()
-        self.y = label_encoder.fit_transform(self.df["country"])
+        self.y = label_encoder.fit_transform(countries)
         self.country_lookup = dict(zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_)))
 
         print("Data preprocessing completed.")
@@ -119,7 +105,7 @@ class WineOriginClassifier:
 
         return clf
 
-    def visualise_tree(self, tree_index=0, max_depth=3):
+    def visualise_tree(self, tree_index=0, max_depth=None):
         """Visualise one tree from the random forest (by default the first tree)."""
         dot_data = export_graphviz(self.random_forest.estimators_[tree_index],
                                    feature_names=self.X.columns,
@@ -136,7 +122,7 @@ class WineOriginClassifier:
 
 
 if __name__ == "__main__":
-    wine_data_source = "output/new_modified.csv"
+    wine_data_source = "output/wine_quality_more_features_100.csv"
 
     wine_data = WineOriginClassifier(wine_data_source)
 
