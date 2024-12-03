@@ -39,9 +39,14 @@ Is considered negative
 
 LLM Usage
 1: Asking LLM to predict based on desc + details without local model
-2: Applying TF-IDF Vectorisation, but using Named Entity Recognition (NER) (to reduce the features to context relevant ones)
+2: LLM-guided Text Vectorisation (to reduce the features to context relevant ones)
 3: Extract specific features (could be missing) and performing RF
 
 1: LMM without local model:
 Overall Accuracy: 72.80% (728/1000 correct)
+
+2: LLM-guided Text Vectorisation
+When testing with wine_quality_10
+It added 108 new features
+
 

@@ -17,7 +17,7 @@ class LLMClassifier:
         self.df = pd.read_csv(file_path)
         self.output_file = output_file
 
-        # Initialize lists for storing predictions and correctness
+        # Initialise lists for storing predictions and correctness
         self.predictions = []
         self.prediction_correct = []
 
@@ -56,7 +56,7 @@ class LLMClassifier:
             if wine_id in processed_ids:
                 continue
 
-            # Initialize variables for retry logic
+            # Initialise variables for retry logic
             attempts = 0
             predicted_country = None
 
