@@ -47,6 +47,7 @@ Overall Accuracy: 72.80% (728/1000 correct)
 
 2: LLM-guided Text Vectorisation
 When testing with wine_quality_10
-It added 108 new features
+It added 108 new features, compared to 180 (without LLM filtering)
+Overall Accuracy 79% - no difference compared to without LLM
 
 

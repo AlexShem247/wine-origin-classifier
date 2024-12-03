@@ -1,0 +1,37 @@
+digraph Tree {
+node [shape=box, style="filled, rounded", color="black", fontname="helvetica"] ;
+edge [fontname="helvetica"] ;
+0 [label=<firm &le; 0.5<br/>gini = 0.563<br/>samples = 570<br/>value = [128, 155, 60, 557]<br/>class = US>, fillcolor="#e994f1"] ;
+1 [label=<prosecco &le; 0.5<br/>gini = 0.55<br/>samples = 548<br/>value = [113, 145, 59, 545]<br/>class = US>, fillcolor="#e991f0"] ;
+0 -> 1 [labeldistance=2.5, labelangle=45, headlabel="True"] ;
+2 [label=<variety_pinot_noir &le; 0.5<br/>gini = 0.548<br/>samples = 547<br/>value = [113.0, 142.0, 59.0, 545.0]<br/>class = US>, fillcolor="#e990f0"] ;
+1 -> 2 ;
+3 [label=<note &le; 0.5<br/>gini = 0.587<br/>samples = 485<br/>value = [106.0, 142.0, 59.0, 448.0]<br/>class = US>, fillcolor="#eb9cf2"] ;
+2 -> 3 ;
+4 [label="(...)", fillcolor="#C0C0C0"] ;
+3 -> 4 ;
+321 [label="(...)", fillcolor="#C0C0C0"] ;
+3 -> 321 ;
+322 [label=<young &le; 0.5<br/>gini = 0.126<br/>samples = 62<br/>value = [7, 0, 0, 97]<br/>class = US>, fillcolor="#da47e7"] ;
+2 -> 322 ;
+323 [label="(...)", fillcolor="#C0C0C0"] ;
+322 -> 323 ;
+344 [label="(...)", fillcolor="#C0C0C0"] ;
+322 -> 344 ;
+347 [label=<gini = 0.0<br/>samples = 1<br/>value = [0, 3, 0, 0]<br/>class = Italy>, fillcolor="#47e539"] ;
+1 -> 347 ;
+348 [label=<red &le; 0.5<br/>gini = 0.675<br/>samples = 22<br/>value = [15, 10, 1, 12]<br/>class = France>, fillcolor="#fcf0e8"] ;
+0 -> 348 [labeldistance=2.5, labelangle=-45, headlabel="False"] ;
+349 [label=<leather &le; 0.5<br/>gini = 0.682<br/>samples = 20<br/>value = [9, 10, 1, 12]<br/>class = US>, fillcolor="#fbedfd"] ;
+348 -> 349 ;
+350 [label=<blackberry &le; 0.5<br/>gini = 0.678<br/>samples = 19<br/>value = [9, 8, 1, 12]<br/>class = US>, fillcolor="#f9e3fb"] ;
+349 -> 350 ;
+351 [label="(...)", fillcolor="#C0C0C0"] ;
+350 -> 351 ;
+380 [label="(...)", fillcolor="#C0C0C0"] ;
+350 -> 380 ;
+381 [label=<gini = 0.0<br/>samples = 1<br/>value = [0, 2, 0, 0]<br/>class = Italy>, fillcolor="#47e539"] ;
+349 -> 381 ;
+382 [label=<gini = 0.0<br/>samples = 2<br/>value = [6, 0, 0, 0]<br/>class = France>, fillcolor="#e58139"] ;
+348 -> 382 ;
+}

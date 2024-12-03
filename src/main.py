@@ -50,20 +50,21 @@ class WineOriginClassifier:
         descriptions = self.df.pop("description")
 
         # Apply TF-IDF Vectorization on "description" column
-        tfidf_vectorizer = TfidfVectorizer(stop_words="english", max_features=500)
-        X_desc = tfidf_vectorizer.fit_transform(descriptions)
-
-        # Get the feature names and create new column names for descriptions (e.g., "desc_{word}")
-        desc_columns = [f"desc_{word}" for word in tfidf_vectorizer.get_feature_names_out()]
-
-        # Convert the sparse matrix to a dense DataFrame and set the column names
-        X_desc_df = pd.DataFrame(X_desc.toarray(), columns=desc_columns)
-
-        # Concatenate the new description features with the other features (price, points, variety)
-        self.df = pd.concat([self.df, X_desc_df], axis=1)
+        # tfidf_vectorizer = TfidfVectorizer(stop_words="english", max_features=500)
+        # X_desc = tfidf_vectorizer.fit_transform(descriptions)
+        #
+        # # Get the feature names and create new column names for descriptions (e.g., "desc_{word}")
+        # desc_columns = [f"desc_{word}" for word in tfidf_vectorizer.get_feature_names_out()]
+        #
+        # # Convert the sparse matrix to a dense DataFrame and set the column names
+        # X_desc_df = pd.DataFrame(X_desc.toarray(), columns=desc_columns)
+        #
+        # # Concatenate the new description features with the other features (price, points, variety)
+        # self.df = pd.concat([self.df, X_desc_df], axis=1)
 
         # Define features (X) and target (y)
-        self.X = self.df[["price", "points"] + [col for col in self.df if col.startswith("variety_")] + desc_columns]
+        #self.X = self.df[["price", "points"] + [col for col in self.df if col.startswith("variety_")] + desc_columns]
+        self.X = self.df.drop(columns=["id", "country"])
 
         # Label encode the target variable and create country lookup dictionary
         label_encoder = LabelEncoder()
@@ -135,7 +136,7 @@ class WineOriginClassifier:
 
 
 if __name__ == "__main__":
-    wine_data_source = "data/wine_quality_1000.csv"
+    wine_data_source = "output/new_modified.csv"
 
     wine_data = WineOriginClassifier(wine_data_source)
 
@@ -149,4 +150,4 @@ if __name__ == "__main__":
     wine_data.train_random_forest(*params)
 
     # Visualise one tree from the forest
-    # wine_data.visualise_tree()
+    wine_data.visualise_tree()

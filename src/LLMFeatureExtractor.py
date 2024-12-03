@@ -1,3 +1,5 @@
+import ast
+import os
 import re
 import sys
 from time import sleep
@@ -5,94 +7,121 @@ from time import sleep
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from src.LLMClient import LLMClient, LLMClientError
+from src.LLMClient import LLMClient
 
 PROMPT_MAX_ATTEMPTS = 5
 RESPONSE_DELAY = 1
 
-def custom_tokenizer(text):
-    # This regex keeps hyphenated words together
-    return re.findall(r'\b\w+(?:-\w+)*\b', text.lower())
-
 
 class LLMFeatureExtractor:
-    def __init__(self, llm_client: LLMClient, file_path: str, output_file: str):
+    def __init__(self, llm_client, file_path: str, output_file: str, external_words_file: str):
+        """Initializes the feature extractor with the LLM client and file paths."""
         self.llm_client = llm_client
+        self.file_path = file_path
         self.output_file = output_file
-        self.df = pd.read_csv(file_path)
+        self.external_words_file = external_words_file
 
-    def text_vectorisation(self, max_retries=5, prompt_max_attempts=5, response_delay=1):
-        """Performs LLM-based feature extraction and vectorizes text descriptions."""
+        # Load data from the CSV
+        self.df = pd.read_csv(self.file_path)
+
+    def text_vectorisation(self):
+        """Performs LLM-based feature extraction and vectorises text descriptions."""
         if self.df is None:
             raise ValueError("Data not loaded properly.")
 
+        # Define header for the output file
+        header = ["id", "extracted_words"]
+
+        # Create the output file if it doesn't exist
+        if not os.path.exists(self.external_words_file):
+            with open(self.external_words_file, mode="w", newline='', encoding='utf-8') as f:
+                writer = pd.DataFrame(columns=header)
+                writer.to_csv(f, index=False)
+
+        # Load already processed IDs from the external file
+        processed_ids = set()
+        if os.path.exists(self.external_words_file):
+            processed_data = pd.read_csv(self.external_words_file)
+            if "id" in processed_data.columns:
+                processed_ids = set(processed_data["id"])
+
         print("Performing LLM-based feature extraction...")
 
-        # Define the prompt template for LLM
-        prompt_template = (
-            "Extract important words or named entities from the wine description below. "
-            "Focus on key details like wine types, flavors, regions, or any notable attributes.\n"
-            "Description: {description}\n"
-            "Respond with a comma-separated list of these key features."
-        )
-
-        # Initialize a list to store sets of extracted words/features for each row
-        all_extracted_words = []
-
+        # Loop through the rows and generate a prompt for each wine
+        index: int
         for index, row in self.df.iterrows():
+            wine_id = row["id"]
             description = row["description"]
-            retries = 0
 
-            while retries < prompt_max_attempts:
-                try:
-                    # Format the prompt with the description
-                    prompt = prompt_template.format(description=description)
+            # Skip rows that are already processed
+            if wine_id in processed_ids:
+                continue
 
-                    # Get response from the LLM
-                    response = self.llm_client.get_response(prompt).strip()
+            # Prepare the prompt for LLM
+            prompt = (
+                "Extract important words or named entities from the wine description below. "
+                "Focus on key details like wine types, flavors, regions, or any notable attributes.\n"
+                "Description: {description}\n"
+                "Respond with a comma-separated list of these key features."
+            ).format(description=description)
 
-                    # Parse the LLM response to extract relevant words/names
-                    extracted_words = set(response.lower().replace(",", "").split())
+            # Get response from the LLM
+            response = self.llm_client.get_response(prompt).strip()
 
-                    # Append the set of extracted words to the list
-                    all_extracted_words.append(extracted_words)
-                    break  # Exit retry loop if successful
+            # Parse the LLM response to extract relevant words/names
+            extracted_words = response.lower().replace(",", "").split()
 
-                except LLMClientError as e:
-                    print(f"Error: {e}. Retrying ({retries + 1}/{prompt_max_attempts})...")
-                    retries += 1
-                    sleep(response_delay)
-            else:
-                print(f"Failed to process row {index} after {prompt_max_attempts} retries.")
+            # Store the extracted words with the wine ID
+            row_to_save = {
+                "id": wine_id,
+                "extracted_words": extracted_words
+            }
 
-            sleep(response_delay)
+            # Append the row to the CSV file (using mode="a" to append)
+            with open(self.external_words_file, mode="a", newline='', encoding='utf-8') as f:
+                writer = pd.DataFrame([row_to_save])
+                writer.to_csv(f, header=False, index=False)
 
-        # Apply TF-IDF vectorization to the extracted words
-        self._apply_tfidf(all_extracted_words)
+            current_progress = index + 1
+            total_rows = len(self.df)
+            print(f"Processed {current_progress}/{total_rows} rows ({(current_progress / total_rows) * 100:.2f}%)")
 
-        # Output the file with the new features
-        self.df.to_csv(self.output_file, index=False)
-        print(f"Enhanced dataset saved to {self.output_file}.")
+            # Sleep to avoid overwhelming the API with too many requests
+            sleep(1)
 
-    def _apply_tfidf(self, all_extracted_words):
-        """Applies TF-IDF vectorization to the extracted words."""
-        # Create a list of unique words from all rows
-        all_unique_words = sorted(set(word for words in all_extracted_words for word in words))
+        print("Finished extracting features and saving to CSV.")
 
-        # Convert the sets of extracted words into a string format for TF-IDF
-        word_lists = [" ".join(words) for words in all_extracted_words]
+        # Apply TF-IDF
+        self._apply_tfidf(pd.read_csv(self.external_words_file))
 
-        # Initialize the TF-IDF vectorizer
-        tfidf_vectorizer = TfidfVectorizer(tokenizer=custom_tokenizer, token_pattern=None, vocabulary=all_unique_words)
+    def _apply_tfidf(self, extracted_words_df):
+        """Vectorize the extracted words using TF-IDF."""
+        desc_words = set()
 
-        # Apply TF-IDF vectorization to the descriptions
-        tfidf_matrix = tfidf_vectorizer.fit_transform(word_lists)
+        # Iterate over each row in the DataFrame
+        for words in extracted_words_df["extracted_words"]:
+            # Split the comma-separated words and add them to the set
+            desc_words.update(ast.literal_eval(words))
 
-        # Convert the sparse matrix to a DataFrame and set the column names
-        tfidf_df = pd.DataFrame(tfidf_matrix.toarray(), columns=tfidf_vectorizer.get_feature_names_out())
+        # Use TF-IDF Vectorizer to vectorize the words
+        tfidf_vectorizer = TfidfVectorizer(tokenizer=lambda t: re.findall(r'\b\w+(?:-\w+)*\b', t.lower()),
+                                           token_pattern=None, vocabulary=list(desc_words))
+        X = tfidf_vectorizer.fit_transform(extracted_words_df["extracted_words"])
 
-        # Concatenate the new TF-IDF features with the original dataset
-        self.df = pd.concat([self.df, tfidf_df], axis=1)
+        # Create a DataFrame from the TF-IDF output
+        tfidf_df = pd.DataFrame(X.toarray(), columns=tfidf_vectorizer.get_feature_names_out())
+
+        # Concatenate the original data with the TF-IDF features
+        final_df = pd.concat([self.df, tfidf_df], axis=1)
+
+        # Save the final dataset to the output file
+        final_df.to_csv(self.output_file, index=False)
+        print(f"Final dataset with TF-IDF features saved to {self.output_file}.")
+
+    def clearPreviousEntries(self):
+        if os.path.exists(self.external_words_file):
+            print("Found previous entries. Deleting.")
+            os.remove(self.external_words_file)
 
 
 if __name__ == "__main__":
@@ -101,6 +130,7 @@ if __name__ == "__main__":
         exit(-1)
 
     llm = LLMClient(api_key=sys.argv[1])
-    lfe = LLMFeatureExtractor(llm, file_path="../data/wine_quality_10.csv",
-                              output_file="../output/wine_quality_features+.csv")
+    lfe = LLMFeatureExtractor(llm, file_path="../data/wine_quality_1000.csv",
+                              output_file="../output/wine_quality_features+_1000.csv",
+                              external_words_file="../output/wine_features_1000.csv")
     lfe.text_vectorisation()
