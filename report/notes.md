@@ -56,3 +56,63 @@ Chose to do (1) because every row is compared against the same categories, reduc
 Takes a long time to run ~20s per row.
 percentage not calcualted yet TODO
 
+
+C:\Users\Alexa\AppData\Local\Programs\Python\Python310\python.exe C:\Programming\Python\ArtificialLabs\src\main.py 
+Data loaded successfully with 500 rows.
+Data preprocessing completed.
+Best Hyperparameters: {'max_depth': 30, 'n_estimators': 100}
+Best Cross-Validation Accuracy: 0.55
+Test Accuracy: 0.56
+
+Classification Report:
+               precision    recall  f1-score   support
+
+           0       0.00      0.00      0.00         7
+           1       0.20      0.14      0.17         7
+           2       0.00      0.00      0.00         5
+           3       0.61      0.87      0.72        31
+
+    accuracy                           0.56        50
+   macro avg       0.20      0.25      0.22        50
+weighted avg       0.41      0.56      0.47        50
+
+
+Confusion Matrix:
+ [[ 0  0  0  7]
+ [ 0  1  0  6]
+ [ 0  1  0  4]
+ [ 1  3  0 27]]
+
+Process finished with exit code 0
+
+
+
+
+C:\Users\Alexa\AppData\Local\Programs\Python\Python310\python.exe C:\Programming\Python\ArtificialLabs\src\main.py 
+Data loaded successfully with 500 rows.
+Data preprocessing completed.
+Test Accuracy: 0.66
+
+Classification Report:
+               precision    recall  f1-score   support
+
+           0       0.50      0.14      0.22         7
+           1       0.60      0.43      0.50         7
+           2       0.00      0.00      0.00         5
+           3       0.67      0.94      0.78        31
+
+    accuracy                           0.66        50
+   macro avg       0.44      0.38      0.38        50
+weighted avg       0.57      0.66      0.59        50
+
+
+Confusion Matrix:
+ [[ 1  0  0  6]
+ [ 0  3  0  4]
+ [ 0  1  0  4]
+ [ 1  1  0 29]]
+
+Process finished with exit code 0
+
+
+

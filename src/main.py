@@ -1,6 +1,7 @@
 import graphviz
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import f1_score, classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import export_graphviz
@@ -67,12 +68,12 @@ class WineOriginClassifier:
     def hyperparameter_tuning(self, skip=False):
         """Tune hyperparameters for max_depth and n_estimators."""
         param_grid = {
-            "n_estimators": [100, 200, 300, 500, 700],
+            "n_estimators": [100, 200, 300, 500, 700, 1000],
             "max_depth": [10, 20, 30, 40, 50]
         }
 
         if skip:
-            return param_grid["n_estimators"][4], param_grid["max_depth"][3]
+            return param_grid["n_estimators"][5], param_grid["max_depth"][3]
 
         clf = RandomForestClassifier(random_state=42)
 
@@ -103,6 +104,14 @@ class WineOriginClassifier:
         test_score = clf.score(self.X_test, self.y_test)
         print(f"Test Accuracy: {test_score:.2f}")
 
+        # Generate and print classification report
+        y_pred = clf.predict(self.X_test)
+        print("\nClassification Report:\n", classification_report(self.y_test, y_pred, zero_division=0))
+
+        # Generate and print confusion matrix
+        conf_matrix = confusion_matrix(self.y_test, y_pred)
+        print("\nConfusion Matrix:\n", conf_matrix)
+
         return clf
 
     def visualise_tree(self, tree_index=0, max_depth=None):
@@ -122,7 +131,7 @@ class WineOriginClassifier:
 
 
 if __name__ == "__main__":
-    wine_data_source = "output/wine_quality_more_features_1000.csv"
+    wine_data_source = "output/new_modified.csv"
 
     wine_data = WineOriginClassifier(wine_data_source)
 
@@ -136,4 +145,4 @@ if __name__ == "__main__":
     wine_data.train_random_forest(*params)
 
     # Visualise one tree from the forest
-    wine_data.visualise_tree()
+    # wine_data.visualise_tree()
