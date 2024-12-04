@@ -131,7 +131,7 @@ class WineOriginClassifier:
 
 
 if __name__ == "__main__":
-    wine_data_source = "output/new_modified.csv"
+    wine_data_source = "output/modified.csv"
 
     wine_data = WineOriginClassifier(wine_data_source)
 
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     X, y = wine_data.preprocess_data()
 
     # Hyperparameter tuning to improve the model
-    params = wine_data.hyperparameter_tuning(skip=True)
+    params = wine_data.hyperparameter_tuning(skip=False)
 
     # Train the model again with the best hyperparameters
     wine_data.train_random_forest(*params)

@@ -468,6 +468,25 @@ After replacing missing values and retraining the model, the results improved si
 
 These results were more realistic but still not impressive. The model performed slightly better than before, but the performance still fell short compared to the baseline (62%) and even worse than the model without the feature extraction (71%).
 
+#### Model Evaluation with Reintroduced Features
+
+After reviewing the output CSV file, I realised a significant oversight: I had accidentally omitted the columns for **points**, **price**, and **variety**. Although this gave us the chance to test the model based solely on the feature extraction from the description, it was crucial to reintroduce these columns for a more comprehensive evaluation. After fixing this, I retrained the model, and the results improved significantly:
+
+- **Accuracy**: 72%  
+- **Weighted F1-score**: 67%
+
+| **Actual / Predicted** | **France** | **Italy** | **Spain** | **US** |
+|------------------------|------------|-----------|-----------|--------|
+| **France**             | 2          | 0         | 0         | 5      |
+| **Italy**              | 0          | 3         | 0         | 4      |
+| **Spain**              | 0          | 0         | 1         | 4      |
+| **US**                 | 0          | 1         | 0         | 30     |
+
+These new results are an improvement over the previous ones, though they still fall short of expectations. The model's performance is better than before, but it's still not significantly above baseline.
+
 #### Thoughts
 
-The model's performance was impacted by missing values, but even after addressing them, the improvements were modest. The feature extraction from wine descriptions using the LLM didn't add as much value as expected. The chosen features may not capture the most relevant patterns for predicting wine origin, or they might not correlate strongly with the target variable. Random Forest may not be the best model for this task, and exploring more complex models, like neural networks, could yield better results. Further hyperparameter tuning of the Random Forest could also improve performance. Additionally, evaluating feature importance might reveal which features are actually contributing to the classification, potentially guiding further refinement of the feature extraction process.
+The model's performance was affected by missing values, but after addressing this, the improvements were modest. The feature extraction from wine descriptions using the LLM didn't provide as much value as anticipated. The features selected might not fully capture the relevant patterns for predicting wine origin, or they may not have strong correlations with the target variable. 
+
+Additionally, Random Forest might not be the best model for this task. Exploring more complex models, such as neural networks, could offer better results. Further hyperparameter tuning of the Random Forest could also help optimise performance. Finally, evaluating the feature importance might shed light on which features are genuinely contributing to the classification, helping refine the feature extraction process moving forward.
+
