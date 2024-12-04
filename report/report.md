@@ -11,7 +11,7 @@
    2. [Model Baseline](#22-model-baseline)
    3. [Wine Descriptions](#23-wine-descriptions)
 3. [Approach and Methodology](#3-approach-and-methodology)
-   1. [Predictive Modeling Using Quantitative Data](#31-predictive-modeling-using-quantitative-data)
+   1. [Predictive Modelling Using Quantitative Data](#31-predictive-modelling-using-quantitative-data)
    2. [NLP for Textual Feature Extraction](#32-nlp-for-textual-feature-extraction)
    3. [LLM Integration](#33-llm-integration)
 4. [Conclusion](#4-conclusion)
@@ -31,7 +31,7 @@ This report outlines the approach taken to preprocess the data, handle the chall
 The dataset includes five columns: **Country**, **Description**, **Points**, **Price**, and **Variety**:
 
 - **Country**: The target variable, representing the country of origin of the wine. It can be one of four categories: **US**, **Spain**, **France**, or **Italy**.
-- **Description**: A plain-text description of the wine, typically containing 30-40 words. This field provides details about the wine's characteristics, flavors, and other sensory attributes.
+- **Description**: A plain-text description of the wine, typically containing 30-40 words. This field provides details about the wine's characteristics, flavours, and other sensory attributes.
 - **Points**: An integer value representing the average review score of the wine on a scale of 1-100.
 - **Price**: An integer value indicating the cost of a bottle of wine.
 - **Variety**: A string representing the type of grape used to make the wine. This is a categorical feature with several possible values.
@@ -63,7 +63,7 @@ The **Description** column in the dataset provides detailed insights into the se
 
 The following wine features could help identify the country of origin of the wine:
 
-- **Flavor Profiles**: Terms like *berry*, *pepper*, and *mushroom* indicate fruity, spicy, or earthy characteristics, suggesting the wine's flavor profile.
+- **flavour Profiles**: Terms like *berry*, *pepper*, and *mushroom* indicate fruity, spicy, or earthy characteristics, suggesting the wine's flavour profile.
 
 - **Texture and Body**: Descriptors such as *light-bodied*, *full-bodied*, and *tannic* reveal the wine's weight and texture.
 
@@ -74,7 +74,7 @@ The following wine features could help identify the country of origin of the win
 - **Terroir and Region**: Terms such as *coastal* or *volcanic* point to the influence of the wine's origin and terroir.
 
 
-By analysing these features, we can identify patterns that might correlate with specific countries of origin. For example, **earthy** and **floral** flavors may point to **France** or **Italy**, while **fruity** and **spicy** notes could suggest wines from the **US** or **Spain**.
+By analysing these features, we can identify patterns that might correlate with specific countries of origin. For example, **earthy** and **floral** flavours may point to **France** or **Italy**, while **fruity** and **spicy** notes could suggest wines from the **US** or **Spain**.
 
 These features can be extracted using the **Large Language Model (LLM)** techniques to enhance the model and improve prediction accuracy.
 
@@ -91,7 +91,7 @@ For the second part, I will enhance the model by applying **NLP techniques** to 
 
 Finally, I will integrate **Large Language Models (LLM)** to extract relevant features and guide the text vectorisation process, enhancing model performance by reducing noise and focusing on contextually important features.
 
-### 3.1 Predictive Modeling Using Quantitative Data
+### 3.1 Predictive Modelling Using Quantitative Data
 
 In this phase, I will build a predictive model using the existing quantitative features: **Points**, **Price**, and **Variety**. This will establish a baseline model to predict the **country of origin** of the wine and assess what can be achieved with the current data.
 
@@ -101,7 +101,7 @@ In this phase, I will build a predictive model using the existing quantitative f
 
 #### 3.1 Choice of Model
 
-For modeling, I will use a **Random Forest**, an ensemble method that combines multiple **decision trees** to improve accuracy. Each tree is trained on a random subset of data and features. A **decision tree** splits data based on a feature that provides the best **information gain**, which helps classify the data, in this case, the wine's country of origin. While a single decision tree can overfit the data, **Random Forest** reduces this by averaging predictions from many trees, making it more robust and accurate.
+For modelling, I will use a **Random Forest**, an ensemble method that combines multiple **decision trees** to improve accuracy. Each tree is trained on a random subset of data and features. A **decision tree** splits data based on a feature that provides the best **information gain**, which helps classify the data, in this case, the wine's country of origin. While a single decision tree can overfit the data, **Random Forest** reduces this by averaging predictions from many trees, making it more robust and accurate.
 
 Although a **neural network** could also be used, it may overtrain the data, especially with the current feature set. Neural networks are powerful but can become too complex for this task, requiring more training time and computational resources. In contrast, Random Forest provides a simpler and more interpretable solution. The decision trees produced by Random Forest are valuable for understanding the logic behind predictions, which is particularly useful in a business context.
 
@@ -110,7 +110,7 @@ Although a **neural network** could also be used, it may overtrain the data, esp
 The implementation of the Random Forest model involved several key steps:
 
 1. **Data Preprocessing**  
-   The dataset required preprocessing to prepare it for modeling. I applied **one-hot encoding** to the categorical feature `variety` using `pandas`' `get_dummies()` function. This transformed the `variety` column into binary columns, enabling the model to process this categorical data effectively.
+   The dataset required preprocessing to prepare it for modelling. I applied **one-hot encoding** to the categorical feature `variety` using `pandas`' `get_dummies()` function. This transformed the `variety` column into binary columns, enabling the model to process this categorical data effectively.
 
 2. **Data Splitting**  
    The dataset was randomly split into **training** (90%) and **testing** (10%) sets to evaluate the model's performance. This ensured that the model was trained on a substantial portion of the data while reserving a smaller portion for unbiased performance evaluation.
@@ -138,13 +138,15 @@ The model's performance is summarised using a confusion matrix, providing a deta
 
 From the confusion matrix, it is evident that the model struggles to predict certain countries like **Spain**, while it performs better for the **US**, likely due to the class imbalance in the dataset, with the US being the dominant class.
 
-#### Decision Tree Analysis
+**Decision Tree Analysis**
 
-![Decision Tree](../images/decision_tree.svg)
+
+![Decision Tree](../images/decision_tree.png){#id .class width=500 height=375px}\
+
 
 To better understand the Random Forest model, we can take a look at one of the decision trees. 
 
-Taking a look at the top, we can see than we split on the **garnacha** variety: If it belongs to it, we deduce that it is from **Spain**. Otherwise, we continue.
+Taking a look at the top, we can see than we split on the **Garnacha** variety: If it belongs to it, we deduce that it is from **Spain**. Otherwise, we continue.
 
 Further down the tree, splits are made using other features, such as **price** and **points**. 
 
@@ -220,14 +222,14 @@ After looking at the top words from the produced by BoW column, the most commonl
 | Word   | Frequency |
 |--------|-----------|
 | wine   | 598       |
-| flavors| 525       |
+| flavours| 525       |
 | fruit  | 395       |
 | cherry | 240       |
 | tannins| 224       |
 
 #### Thoughts
 
-These words highlight the general characteristics of the wine, such as its flavors and sensory qualities. While terms like "wine" and "fruit" are expected, they are quite vague and could apply to many wines. More specific, region-related terms would be helpful for distinguishing wines more effectively. I could use the LLM in combination to reduce these broad terms to more context-specific keywords that better capture the wine's origin and unique features.
+These words highlight the general characteristics of the wine, such as its flavours and sensory qualities. While terms like "wine" and "fruit" are expected, they are quite vague and could apply to many wines. More specific, region-related terms would be helpful for distinguishing wines more effectively. I could use the LLM in combination to reduce these broad terms to more context-specific keywords that better capture the wine's origin and unique features.
 
 
 
@@ -256,7 +258,7 @@ I ran the Sentiment Analysis in combination with TF-IDF Vectorisation and got th
 
 Interestingly, the results were exactly the same as the TF-IDF Vectorisation alone. This suggests that sentiment analysis might not provide much additional value for this particular dataset.
 
-Upon further inspection, I noticed that most sentiment values were close to 0, indicating that the text was largely neutral. For example, the description *"From a site near Annapolis, this wine shows a preponderance of dark grape and cherry flavor interwoven with cinnamon and black peppercorn..."* received a sentiment score of approximately **-0.1**, which is slightly negative. I do not think that adds much value to the model's predictive power.
+Upon further inspection, I noticed that most sentiment values were close to 0, indicating that the text was largely neutral. For example, the description *"From a site near Annapolis, this wine shows a preponderance of dark grape and cherry flavour interwoven with cinnamon and black peppercorn..."* received a sentiment score of approximately **-0.1**, which is slightly negative. I do not think that adds much value to the model's predictive power.
 
 This suggests that sentiment analysis may not be a particularly useful feature for predicting wine origin in this case, as it doesn't seem to correlate well with the outcome. The subjective nature of wine descriptions may lead to inconsistent sentiment scores that don't add significant predictive power to the model.
 
@@ -345,15 +347,15 @@ Instead of adding a large number of columns representing the top 500 most used w
 
 After conducting some research into the wine industry and examining the descriptions provided in the dataset, I came up with 24 features that might be valuable for the model. Here are some of these features (you can find the complete list and the code in `LLMFeatureExtractor.py`):
 
-- **Fruity Flavor**: ["berry", "citrus", "apple", "peach", "plum", "tropical fruit"]
-- **Spicy Flavor**: ["pepper", "cinnamon", "nutmeg", "clove"]
-- **Earthy Flavor**: ["mushroom", "forest floor", "truffle", "soil", "leather"]
+- **Fruity flavour**: ["berry", "citrus", "apple", "peach", "plum", "tropical fruit"]
+- **Spicy flavour**: ["pepper", "cinnamon", "nutmeg", "clove"]
+- **Earthy flavour**: ["mushroom", "forest floor", "truffle", "soil", "leather"]
 - **Body (Weight/Texture)**: ["light-bodied", "medium-bodied", "full-bodied", "creamy", "silky", "tannic"]
 - **Acidity**: ["high acidity", "medium acidity", "low acidity", "crisp", "zesty"]
 - **Sweetness Level**: ["bone dry", "dry", "off-dry", "sweet", "very sweet"]
 - **Food Pairing**: ["barbecue", "cheese", "dessert]
 - **Region/Terroir**: ["mineral", "volcanic", "coastal", "mountain"]
-- **Color**: ["pale", "deep", "ruby", "garnet", "golden", "straw", "amber"]
+- **Colour**: ["pale", "deep", "ruby", "garnet", "golden", "straw", "amber"]
 - **Style**: ["traditional", "modern", "natural", "organic", "biodynamic"]
 
 I implemented these features using a new class in `LLMFeatureExtractor.py`. This class analysed each wine description and extracted the presence of the listed features. It then appended the extracted features to the CSV file, ensuring robustness by saving the results incrementally. For efficiency, I only ran the extraction for 500 entries, as the process took considerable time.
@@ -362,72 +364,13 @@ I implemented these features using a new class in `LLMFeatureExtractor.py`. This
 
 The extracted feature data (simplified here for readability) looks something like this:
 
-<table style="font-size: 10px; border-collapse: collapse;">
-  <thead>
-    <tr>
-      <th style="padding: 3px;">id</th>
-      <th style="padding: 3px;">country</th>
-      <th style="padding: 3px;">description</th>
-      <th style="padding: 3px;">Fruity Favour</th>
-      <th style="padding: 3px;">Spicy Favour</th>
-      <th style="padding: 3px;">Earthy Favour</th>
-      <th style="padding: 3px;">Body (Weight/Texture)</th>
-      <th style="padding: 3px;">Acidity</th>
-      <th style="padding: 3px;">Sweetness Level</th>
-      <th style="padding: 3px;">Ageability</th>
-      <th style="padding: 3px;">Food Pairing / Occasions</th>
-      <th style="padding: 3px;">Region/Terroir</th>
-      <th style="padding: 3px;">Style</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="padding: 3px;">31920</td>
-      <td style="padding: 3px;">US</td>
-      <td style="padding: 3px;">From a dry-farmed...</td>
-      <td style="padding: 3px;">berry</td>
-      <td style="padding: 3px;">pepper</td>
-      <td style="padding: 3px;">leather</td>
-      <td style="padding: 3px;">tannic</td>
-      <td style="padding: 3px;"></td>
-      <td style="padding: 3px;">dry</td>
-      <td style="padding: 3px;">needs aging</td>
-      <td style="padding: 3px;">dinner</td>
-      <td style="padding: 3px;"></td>
-      <td style="padding: 3px;">natural</td>
-    </tr>
-    <tr>
-      <td style="padding: 3px;">6091</td>
-      <td style="padding: 3px;">US</td>
-      <td style="padding: 3px;">From a site near...</td>
-      <td style="padding: 3px;"></td>
-      <td style="padding: 3px;">cinnamon</td>
-      <td style="padding: 3px;">leather</td>
-      <td style="padding: 3px;">light-bodied</td>
-      <td style="padding: 3px;"></td>
-      <td style="padding: 3px;"></td>
-      <td style="padding: 3px;">needs aging</td>
-      <td style="padding: 3px;">dinner</td>
-      <td style="padding: 3px;">coastal</td>
-      <td style="padding: 3px;">traditional</td>
-    </tr>
-    <tr>
-      <td style="padding: 3px;">61984</td>
-      <td style="padding: 3px;">US</td>
-      <td style="padding: 3px;">There's a lot…</td>
-      <td style="padding: 3px;">peach</td>
-      <td style="padding: 3px;">pepper</td>
-      <td style="padding: 3px;"></td>
-      <td style="padding: 3px;"></td>
-      <td style="padding: 3px;">zesty</td>
-      <td style="padding: 3px;">dry</td>
-      <td style="padding: 3px;">ready to drink</td>
-      <td style="padding: 3px;">seafood pairing</td>
-      <td style="padding: 3px;"></td>
-      <td style="padding: 3px;"></td>
-    </tr>
-  </tbody>
-</table>
+| ID    | Country | Description          | Fruity Favour | Spicy Favour | Body | Sweetness Level | Ageability     | Food Pairing |
+|-------|---------|----------------------|---------------|--------------|----------------------|-----------------|----------------|--------------------------|
+| 31920 | US      | From a dry-farmed... | berry         | pepper       | tannic               | dry             | needs aging    | dinner                   |
+| 6091  | US      | From a site near...  |               | cinnamon     | light-bodied         |                 | needs aging    | dinner                   |
+| 61984 | US      | There's a lot…       | peach         | pepper       |                      | dry             | ready to drink | seafood pairing          |
+
+
 
 
 #### Random Forest Results (Initial Run)
@@ -492,7 +435,7 @@ The model's performance was affected by missing values, but after addressing thi
 
 Additionally, Random Forest might not be the best model for this task. Exploring more complex models, such as neural networks, could offer better results. Further hyperparameter tuning of the Random Forest could also help optimise performance. Finally, evaluating the feature importance might shed light on which features are genuinely contributing to the classification, helping refine the feature extraction process moving forward.
 
-### 4. Conclusion
+## 4. Conclusion
 
 In this experiment, we explored a range of techniques to enhance the wine origin classifier's performance by leveraging additional features and NLP-based approaches.
 
@@ -513,7 +456,7 @@ The best-performing method, achieving **80% accuracy** on a test set of 100 wine
 
 The wine descriptions proved to be a surprisingly rich source of information for classification. Current NLP techniques are highly effective, and integrating LLMs added value, particularly for filtering and feature selection. However, the LLM-based feature extraction process fell short of expectations in terms of model performance relative to the time investment required for querying.
 
-While the final model performed well, I believe its **80% accuracy** may be inflated by the dataset's imbalance favoring US wines. This imbalance could mean the model performs worse on non-US wines. Despite this, I am satisfied with the results and the insights gained from exploring both traditional NLP methods and the capabilities of LLMs.
+While the final model performed well, I believe its **80% accuracy** may be inflated by the dataset's imbalance favouring US wines. This imbalance could mean the model performs worse on non-US wines. Despite this, I am satisfied with the results and the insights gained from exploring both traditional NLP methods and the capabilities of LLMs.
 
 ## 5. Challenges and Next Steps
 
