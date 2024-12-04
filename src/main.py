@@ -122,7 +122,7 @@ class WineOriginClassifier:
 
 
 if __name__ == "__main__":
-    wine_data_source = "output/wine_quality_more_features_100.csv"
+    wine_data_source = "output/wine_quality_more_features_1000.csv"
 
     wine_data = WineOriginClassifier(wine_data_source)
 

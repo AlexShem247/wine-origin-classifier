@@ -50,11 +50,14 @@ class LLMClient:
             # Handle rate limit error (429 Too Many Requests)
             elif response.status_code == 429:
                 retry_count += 1
-                sleep(1)
+                sleep(0.5)
 
                 # Handle other errors
             else:
-                raise LLMClientError(f"Error {response.status_code}: {response.text}")
+                # raise LLMClientError(f"Error {response.status_code}: {response.text}")
+                sleep(5)
+                return self.get_response(prompt)
 
         # If all retries fail, raise an exception
-        raise LLMClientError(f"Failed after {self.MAX_RETRIES} retries due to rate limits.")
+        sleep(5)
+        return self.get_response(prompt)

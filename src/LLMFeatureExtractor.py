@@ -7,10 +7,10 @@ from time import sleep
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from src.LLMClient import LLMClient
+from LLMClient import LLMClient
 
 PROMPT_MAX_ATTEMPTS = 5
-RESPONSE_DELAY = 1
+RESPONSE_DELAY = 0.5
 
 WINE_FEATURES = {
     "Fruity Favour": ["berry", "citrus", "apple", "peach", "plum", "tropical fruit"],
@@ -26,8 +26,8 @@ WINE_FEATURES = {
     "Body (Weight/Texture)": ["light-bodied", "medium-bodied", "full-bodied", "creamy", "silky", "tannic"],
     "Acidity": ["high acidity", "medium acidity", "low acidity", "crisp", "zesty"],
     "Sweetness Level": ["bone dry", "dry", "off-dry", "sweet", "very sweet"],
-    "Alcohol Level (Perception)": ["light", "medium", "high", "hot (overly alcoholic)"],
-    "Ageability": ["ready to drink", "needs aging", "long-term aging potential", "over the hill (past its prime)"],
+    "Alcohol Level (Perception)": ["light", "medium", "high", "hot"],
+    "Ageability": ["ready to drink", "needs aging", "long-term aging potential", "over the hill"],
     "Food Pairing / Occasions": [
         "dinner", "casual", "celebration", "aperitif", "barbecue",
         "cheese pairing", "dessert pairing", "seafood pairing"
