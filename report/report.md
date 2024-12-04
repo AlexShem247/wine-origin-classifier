@@ -312,9 +312,9 @@ So far, it seems that the time and cost associated with using the LLM do not jus
 
 #### 3.3.2 LLM-guided Text Vectorisation
 
-TF-IDF Vectorisation had been the most effective technique so far, achieving solid results. To improve the model further, I sought to ensure the words used were more relevant to the context of wine. Since TF-IDF worked best with around **500** selected words (columns), I decided to incorporate LLM-guided filtering to focus on wine-related features.
+Bag of Words (BoW) was an effective technique, achieving solid results. To improve the model further, I sought to ensure the words used were more relevant to the context of wine. Since BoW worked best with around **500** selected words (columns), I decided to incorporate LLM-guided filtering to focus on wine-related features.
 
-To achieve this, I used the LLM to identify and extract relevant words for each wine description. These words were saved in a file called `wine_features_1000.csv`. Once the words were filtered, I applied TF-IDF vectorisation on the cleaned dataset.
+To achieve this, I used the LLM to identify and extract relevant words for each wine description. These words were saved in a file called `wine_features_1000.csv`. Once the words were filtered, I applied BoW on the cleaned dataset.
 
 Initially, I tested this approach on a subset of 10 wines. Compared to the original method, LLM filtering reduced the features from **180** to just **108**. 
 
@@ -330,12 +330,12 @@ After performing the process on the entire dataset, the model produced the follo
 | **Spain**              | 0          | 1         | 1         | 4      |
 | **US**                 | 0          | 0         | 1         | 60     |
 
-This approach yielded a slight improvement over the baseline TF-IDF Vectorisation (which had an accuracy of 78%), but it took significantly longer to run.
+This approach yielded a slight improvement over the baseline BoW and TF-IDF Vectorisation (which had an accuracy of 78%), but it took significantly longer to run.
 
 Here are some of the most common words extracted:
 
-| **Relevant Words**     |
-|------------------------|
+| **Relevant Words**                                    |
+|-------------------------------------------------------|
 | **'fruit', 'cherry', 'dry', 'oak', 'black', 'sweet'** |
 
 By leveraging the LLM, the extracted words were more relevant to the context of wine, which likely contributed to the model's improved performance. However, the added time cost may limit its practical use for larger datasets.
@@ -448,7 +448,7 @@ We also experimented with **LLM-only predictions**, achieving **72.8%** accuracy
 The best-performing method, achieving **80% accuracy** on a test set of 100 wines, was:
 
 1. Extracting the most relevant words from descriptions using the LLM's judgment.  
-2. Reducing the dimensionality by selecting the **top 500 most frequent terms** and applying TF-IDF.  
+2. Reducing the dimensionality by selecting the **top 500 most frequent terms** and applying Bag of Words.  
 3. Combining this data with existing features like points, price, and variety.  
 4. Training a Random Forest classifier with hyperparameter tuning and cross-validation.
 
@@ -469,7 +469,7 @@ While the final model performed well, I believe its **80% accuracy** may be infl
 
 
 3. **Excessive and Irrelevant Features**:  
-   The LLM model included words like “wine” and “acidity” in the feature set, which as they are related to the general context of wine (which is what I asked) but do not provide valuable insights about the wine’s origin. Implementing harsher filtering techniques and better LLM prompts before applying models like TF-IDF could help remove such terms and focus the model on more meaningful, context-specific words that contribute to distinguishing the wine's origin.
+   The LLM model included words like “wine” and “acidity” in the feature set, which as they are related to the general context of wine (which is what I asked) but do not provide valuable insights about the wine’s origin. Implementing harsher filtering techniques and better LLM prompts before applying models like BoW or TF-IDF could help remove such terms and focus the model on more meaningful, context-specific words that contribute to distinguishing the wine's origin.
 
 
 4. **Model Limitations with Static Data**:  

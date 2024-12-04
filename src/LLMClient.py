@@ -54,10 +54,7 @@ class LLMClient:
 
                 # Handle other errors
             else:
-                # raise LLMClientError(f"Error {response.status_code}: {response.text}")
-                sleep(5)
-                return self.get_response(prompt)
+                raise LLMClientError(f"Error {response.status_code}: {response.text}")
 
         # If all retries fail, raise an exception
-        sleep(5)
-        return self.get_response(prompt)
+        raise LLMClientError(f"Failed after {self.MAX_RETRIES} retries due to rate limits.")

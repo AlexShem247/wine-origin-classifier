@@ -46,7 +46,7 @@ WINE_FEATURES = {
 
 class LLMFeatureExtractor:
     def __init__(self, llm_client, file_path: str, output_file: str, external_words_file: str = ""):
-        """Initializes the feature extractor with the LLM client and file paths."""
+        """Initialises the feature extractor with the LLM client and file paths."""
         self.llm_client = llm_client
         self.file_path = file_path
         self.output_file = output_file
@@ -83,7 +83,7 @@ class LLMFeatureExtractor:
             if wine_id in processed_ids:
                 continue
 
-            # Initialize a dictionary to store extracted features for this row
+            # Initialise a dictionary to store extracted features for this row
             extracted_features = {"id": wine_id, "country": row["country"], "description": row["description"]}
 
             # Process each feature in WINE_FEATURES
@@ -208,7 +208,7 @@ class LLMFeatureExtractor:
         self._apply_tfidf(pd.read_csv(self.external_words_file))
 
     def _apply_tfidf(self, extracted_words_df):
-        """Vectorize the extracted words using TF-IDF."""
+        """Vectorise the extracted words using TF-IDF."""
         desc_words = set()
 
         # Iterate over each row in the DataFrame
@@ -216,13 +216,13 @@ class LLMFeatureExtractor:
             # Split the comma-separated words and add them to the set
             desc_words.update(ast.literal_eval(words))
 
-        # Use TF-IDF Vectorizer to vectorize the words
-        tfidf_vectorizer = TfidfVectorizer(tokenizer=lambda t: re.findall(r'\b\w+(?:-\w+)*\b', t.lower()),
+        # Use TF-IDF Vectoriser to vectorise the words
+        tfidf_vectoriser = TfidfVectorizer(tokenizer=lambda t: re.findall(r'\b\w+(?:-\w+)*\b', t.lower()),
                                            token_pattern=None, vocabulary=list(desc_words))
-        X = tfidf_vectorizer.fit_transform(extracted_words_df["extracted_words"])
+        X = tfidf_vectoriser.fit_transform(extracted_words_df["extracted_words"])
 
         # Create a DataFrame from the TF-IDF output
-        tfidf_df = pd.DataFrame(X.toarray(), columns=tfidf_vectorizer.get_feature_names_out())
+        tfidf_df = pd.DataFrame(X.toarray(), columns=tfidf_vectoriser.get_feature_names_out())
 
         # Concatenate the original data with the TF-IDF features
         final_df = pd.concat([self.df, tfidf_df], axis=1)
