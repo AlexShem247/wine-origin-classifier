@@ -339,5 +339,135 @@ By leveraging the LLM, the extracted words were more relevant to the context of 
 
 #### 3.3.3 Using LLM for Feature Extraction
 
-Foo
+Instead of adding a large number of columns representing the top 500 most used words, I aimed to extract more meaningful features that could help predict the origin of the wine. To achieve this, I utilized a Large Language Model (LLM) to read the wine descriptions and identify relevant details that could be useful for classification.
 
+After conducting some research into the wine industry and examining the descriptions provided in the dataset, I came up with 24 features that might be valuable for the model. Here are some of these features (you can find the complete list and the code in `LLMFeatureExtractor.py`):
+
+- **Fruity Flavor**: ["berry", "citrus", "apple", "peach", "plum", "tropical fruit"]
+- **Spicy Flavor**: ["pepper", "cinnamon", "nutmeg", "clove"]
+- **Earthy Flavor**: ["mushroom", "forest floor", "truffle", "soil", "leather"]
+- **Body (Weight/Texture)**: ["light-bodied", "medium-bodied", "full-bodied", "creamy", "silky", "tannic"]
+- **Acidity**: ["high acidity", "medium acidity", "low acidity", "crisp", "zesty"]
+- **Sweetness Level**: ["bone dry", "dry", "off-dry", "sweet", "very sweet"]
+- **Food Pairing**: ["barbecue", "cheese", "dessert]
+- **Region/Terroir**: ["mineral", "volcanic", "coastal", "mountain"]
+- **Color**: ["pale", "deep", "ruby", "garnet", "golden", "straw", "amber"]
+- **Style**: ["traditional", "modern", "natural", "organic", "biodynamic"]
+
+I implemented these features using a new class in `LLMFeatureExtractor.py`. This class analyzed each wine description and extracted the presence of the listed features. It then appended the extracted features to the CSV file, ensuring robustness by saving the results incrementally. For efficiency, I only ran the extraction for 500 entries, as the process took considerable time.
+
+#### Output
+
+The extracted feature data (simplified here for readability) looks something like this:
+
+<table style="font-size: 10px; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th style="padding: 3px;">id</th>
+      <th style="padding: 3px;">country</th>
+      <th style="padding: 3px;">description</th>
+      <th style="padding: 3px;">Fruity Favour</th>
+      <th style="padding: 3px;">Spicy Favour</th>
+      <th style="padding: 3px;">Earthy Favour</th>
+      <th style="padding: 3px;">Body (Weight/Texture)</th>
+      <th style="padding: 3px;">Acidity</th>
+      <th style="padding: 3px;">Sweetness Level</th>
+      <th style="padding: 3px;">Ageability</th>
+      <th style="padding: 3px;">Food Pairing / Occasions</th>
+      <th style="padding: 3px;">Region/Terroir</th>
+      <th style="padding: 3px;">Style</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="padding: 3px;">31920</td>
+      <td style="padding: 3px;">US</td>
+      <td style="padding: 3px;">From a dry-farmed...</td>
+      <td style="padding: 3px;">berry</td>
+      <td style="padding: 3px;">pepper</td>
+      <td style="padding: 3px;">leather</td>
+      <td style="padding: 3px;">tannic</td>
+      <td style="padding: 3px;"></td>
+      <td style="padding: 3px;">dry</td>
+      <td style="padding: 3px;">needs aging</td>
+      <td style="padding: 3px;">dinner</td>
+      <td style="padding: 3px;"></td>
+      <td style="padding: 3px;">natural</td>
+    </tr>
+    <tr>
+      <td style="padding: 3px;">6091</td>
+      <td style="padding: 3px;">US</td>
+      <td style="padding: 3px;">From a site near...</td>
+      <td style="padding: 3px;"></td>
+      <td style="padding: 3px;">cinnamon</td>
+      <td style="padding: 3px;">leather</td>
+      <td style="padding: 3px;">light-bodied</td>
+      <td style="padding: 3px;"></td>
+      <td style="padding: 3px;"></td>
+      <td style="padding: 3px;">needs aging</td>
+      <td style="padding: 3px;">dinner</td>
+      <td style="padding: 3px;">coastal</td>
+      <td style="padding: 3px;">traditional</td>
+    </tr>
+    <tr>
+      <td style="padding: 3px;">61984</td>
+      <td style="padding: 3px;">US</td>
+      <td style="padding: 3px;">There's a lot…</td>
+      <td style="padding: 3px;">peach</td>
+      <td style="padding: 3px;">pepper</td>
+      <td style="padding: 3px;"></td>
+      <td style="padding: 3px;"></td>
+      <td style="padding: 3px;">zesty</td>
+      <td style="padding: 3px;">dry</td>
+      <td style="padding: 3px;">ready to drink</td>
+      <td style="padding: 3px;">seafood pairing</td>
+      <td style="padding: 3px;"></td>
+      <td style="padding: 3px;"></td>
+    </tr>
+  </tbody>
+</table>
+
+
+#### Random Forest Results (Initial Run)
+
+After extracting the features, I ran the Random Forest model with the new feature set, but the results were disappointing:
+
+- **Test Accuracy**: 56%
+- **Weighted F1 Score**: 47%
+
+| **Actual / Predicted** | **France** | **Italy** | **Spain** | **US** |
+|------------------------|------------|-----------|-----------|--------|
+| **France**             | 0          | 0         | 0         | 7      |
+| **Italy**              | 0          | 1         | 0         | 6      |
+| **Spain**              | 0          | 1         | 0         | 4      |
+| **US**                 | 1          | 3         | 0         | 27     |
+
+
+These results were below the baseline, which is concerning. Upon closer examination, I realized that the model might have struggled with the missing values in the dataset.
+
+#### Data Preprocessing Adjustments
+
+To address the missing values, I decided to fill them in with appropriate values:
+- For the `type_flavour` feature, I replaced missing values with `not_type` (indicating the absence of that specific flavour type).
+- For the other features, I filled missing values using the mode (most common value).
+
+#### Results After Data Preprocessing
+
+After replacing missing values and retraining the model, the results improved significantly:
+
+- **Test Accuracy**: 66%
+- **Weighted F1 Score**: 59%
+
+| **Actual / Predicted** | **France** | **Italy** | **Spain** | **US** |
+|------------------------|------------|-----------|-----------|--------|
+| **France**             | 1          | 0         | 0         | 6      |
+| **Italy**              | 0          | 3         | 0         | 4      |
+| **Spain**              | 0          | 1         | 0         | 4      |
+| **US**                 | 1          | 1         | 0         | 29     |
+
+
+These results were more realistic but still not impressive. The model performed slightly better than before, but the performance still fell short compared to the baseline (62%) and even worse than the model without the feature extraction (71%).
+
+#### Thoughts
+
+The model's performance was impacted by missing values, but even after addressing them, the improvements were modest. The feature extraction from wine descriptions using the LLM didn't add as much value as expected. The chosen features may not capture the most relevant patterns for predicting wine origin, or they might not correlate strongly with the target variable. Random Forest may not be the best model for this task, and exploring more complex models, like neural networks, could yield better results. Further hyperparameter tuning of the Random Forest could also improve performance. Additionally, evaluating feature importance might reveal which features are actually contributing to the classification, potentially guiding further refinement of the feature extraction process.
