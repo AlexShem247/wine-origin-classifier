@@ -105,29 +105,239 @@ Although a **neural network** could also be used, it may overtrain the data, esp
 
 #### 3.2 Initial Implementation
 
-foo
+The implementation of the Random Forest model involved several key steps:
+
+1. **Data Preprocessing**  
+   The dataset required preprocessing to prepare it for modeling. I applied **one-hot encoding** to the categorical feature `variety` using `pandas`' `get_dummies()` function. This transformed the `variety` column into binary columns, enabling the model to process this categorical data effectively.
+
+2. **Data Splitting**  
+   The dataset was randomly split into **training** (90%) and **testing** (10%) sets to evaluate the model's performance. This ensured that the model was trained on a substantial portion of the data while reserving a smaller portion for unbiased performance evaluation.
+
+3. **Model Implementation**  
+   I implemented the Random Forest model using `RandomForestClassifier()` from the `sklearn` library. This library provides a robust and optimised implementation of Random Forest, saving time and effort compared to creating the model manually. The library's implementation also includes efficient methods for training, prediction, and feature importance analysis, making it the preferred choice for this task.
+
+4. **Model Analysis and Interpretation**  
+   To better understand how the Random Forest makes predictions, I visualised one of the decision trees within the forest. This provided insights into how individual features, such as `price` and `points`, influenced the classification process and demonstrated the interpretability of the model. 
 
 #### 3.2 Results
 
-foo
+The model's performance is summarised using a confusion matrix, providing a detailed breakdown of correct and incorrect predictions for each class:
 
-Insert picture of decision tree here.
+- **Accuracy**: 64%  
+- **Weighted F1-Score**: 57%
+
+| **Actual / Predicted** | **France** | **Italy** | **Spain** | **US** |
+|-------------------------|------------|-----------|-----------|--------|
+| **France**             | 4          | 0         | 0         | 11     |
+| **Italy**              | 0          | 3         | 0         | 15     |
+| **Spain**              | 0          | 0         | 0         | 6      |
+| **US**                 | 0          | 2         | 2         | 57     |
+
+
+From the confusion matrix, it is evident that the model struggles to predict certain countries like **Spain**, while it performs better for the **US**, likely due to the class imbalance in the dataset, with the US being the dominant class.
+
+#### Decision Tree Analysis
+
+![Decision Tree](../images/decision_tree.svg)
+
+To better understand the Random Forest model, we can take a look at one of the decision trees. 
+
+Taking a look at the top, we can see than we split on the **garnacha** variety: If it belongs to it, we deduce that it is from **Spain**. Otherwise, we continue.
+
+Further down the tree, splits are made using other features, such as **price** and **points**. 
+
 
 #### 3.3 Improvement using Hyperparameter Tuning with Cross-Validation
 
-foo
+To further improve the model's performance, I employed hyperparameter tuning to identify the optimal values for the model's parameters. The hyperparameters were `n_estimators` (the number of trees in the forest) and `max_depth` (the maximum depth of the trees) which are crucial in determining the model's ability to generalise and avoid overfitting.
+
+To perform this tuning, I first split the training data into training and validation sets. I used `GridSearchCV()` from `sklearn.model_selection`, which performs an exhaustive search over a specified parameter grid. It evaluates all combinations of hyperparameters and selects the ones that yield the best performance based on cross-validation. 
+
+The parameter grid I used for tuning was as follows:
+- **n_estimators**: [100, 200, 300, 500, 700]
+- **max_depth**: [10, 20, 30, 40, 50]
+
 
 #### 3.4 Results
 
-foo
+Here is a summary of the performance of the model:
 
-Insert best parameters here.
+The best hyperparameters found were:
+
+- **max_depth**: 40
+- **n_estimators**: 700
+
+With these hyperparameters, the model achieved the following results:
+
+- **Accuracy**: 71%
+- **Weighted F1-Score**: 70%
+
+| **Actual / Predicted** | **France** | **Italy** | **Spain** | **US** |
+|------------------------|------------|-----------|-----------|--------|
+| **France**             | 6          | 0         | 0         | 9      |
+| **Italy**              | 1          | 10        | 0         | 7      |
+| **Spain**              | 0          | 1         | 4         | 1      |
+| **US**                 | 2          | 6         | 2         | 51     |
+
+We can say that the model significantly improved with hyperparameter tuning. The increase in **accuracy** from 64% to 71% and the jump in the **weighted F1-score** from 57% to 70% demonstrate that adjusting the model's parameters allowed it to better capture the complexities in the data. 
 
 #### 3.5 Summary
 
-foo
+The model using only the quantitative features **Points**, **Price**, and **Variety** achieved an **accuracy** of 71% and a **weighted F1-score** of 70%. This is better than the baseline, but not by much. While **Variety** was a strong predictor, the model struggled with countries like **Spain**, likely due to class imbalance, with **US** being overrepresented. 
 
+Despite this, the results highlight the limitations of relying solely on three pieces of quantitative data for predicting the **country of origin**. Moving forward, incorporating **NLP** techniques could allow the model to leverage additional information from textual data provided by **Description**, potentially improving predictions further.
 
 ### 3.2 NLP for Textual Feature Extraction
 
+The **description** column contains valuable information that can improve our model's performance. To integrate this into the model, I will apply text processing techniques such as **Bag of Words** and **TF-IDF Vectorisation**.
+
+These methods will convert the textual data into numerical features. I will also filter out stop words—common but uninformative words—and explore **Sentiment Analysis** to capture the tone of the text, potentially adding further predictive power to the model.
+
+#### 3.2.1 Bag of Words
+
+The Bag of Words (BoW) model is a simple yet effective technique used for feature extraction in natural language processing. It converts a collection of text into a matrix of token counts, where each row represents a document, and each column represents a word in the vocabulary. The values in the matrix are the counts of how many times a word appears in a document.
+
+To implement BoW, I used the `CountVectorizer` from `sklearn.feature_extraction.text`. This method created a large number of columns, each corresponding to a unique word in the dataset. To avoid an excessively large feature space and improve computational efficiency, I restricted the vocabulary size to the top 500 most frequent words.
+
+After running the model with this approach, I obtained the following results:
+- **Test Accuracy**: 74%
+- **Weighted F1-Score**: 67%
+
+This marked a slight improvement over the initial model, indicating that incorporating text features could be useful, but there was still room for improvement.
+
+Since the model was incorporating a lot of common, less informative words (such as "the", "and", etc.), I decided to remove these stop words. The `CountVectorizer` has a built-in argument called `stop_words`, which allows us to exclude these frequently occurring words from the vocabulary.
+
+After applying this adjustment and retraining the model, the results improved significantly:
+- **Test Accuracy**: 78%
+- **Weighted F1-Score**: 74%
+
+This was a major improvement, highlighting the importance of removing unnecessary words and refining the feature space. The increase in accuracy and F1-score suggests that focusing on the most meaningful words helped the model better capture the relevant patterns in the data.
+
+After looking at the top words from the produced by BoW column, the most commonly used words were:
+
+| Word   | Frequency |
+|--------|-----------|
+| wine   | 598       |
+| flavors| 525       |
+| fruit  | 395       |
+| cherry | 240       |
+| tannins| 224       |
+
+#### Thoughts
+
+These words highlight the general characteristics of the wine, such as its flavors and sensory qualities. While terms like "wine" and "fruit" are expected, they are quite vague and could apply to many wines. More specific, region-related terms would be helpful for distinguishing wines more effectively. I could use the LLM in combination to reduce these broad terms to more context-specific keywords that better capture the wine's origin and unique features.
+
+
+
+#### 3.2.2 TF-IDF Vectorisation
+
+Next, I experimented with a different text feature extraction technique called TF-IDF (Term Frequency-Inverse Document Frequency) Vectorisation. TF-IDF adjusts the importance of words based on how frequently they appear in a document (term frequency) and how rare they are across the entire dataset (inverse document frequency). This helps down-weight common words that are less informative and emphasise more unique words.
+
+I implemented TF-IDF using `TfidfVectorizer` from `sklearn.feature_extraction.text`. Just as with the Bag of Words model, I also removed stop words during this step to ensure that common, non-informative words didn’t negatively impact the model’s performance.
+
+After training the model, I obtained the following results:
+- **Test Accuracy**: 78%
+- **Weighted F1-Score**: 75%
+
+This represents a slight improvement over the Bag of Words approach, showing that TF-IDF provides a better way of capturing the relative importance of words, making the model more sensitive to key features in the text.
+
+
+#### 3.2.3 Sentiment Analysis
+
+Finally, I explored the use of Sentiment Analysis to capture the emotional tone of the wine descriptions. Sentiment analysis works by determining the overall sentiment expressed in a piece of text, typically ranging from positive to negative. For implementation, I used the `TextBlob` library, which provides two key sentiment attributes:
+- **Polarity**: Ranges from -1 (negative) to 1 (positive), indicating the emotional sentiment of the text.
+- **Subjectivity**: Ranges from 0 (objective) to 1 (subjective), indicating how subjective or opinionated the text is.
+
+I ran the Sentiment Analysis in combination with TF-IDF Vectorisation and got the following results:
+- **Test Accuracy**: 78%
+- **Weighted F1-Score**: 75%
+
+Interestingly, the results were exactly the same as the TF-IDF Vectorisation alone. This suggests that sentiment analysis might not provide much additional value for this particular dataset.
+
+Upon further inspection, I noticed that most sentiment values were close to 0, indicating that the text was largely neutral. For example, the description *"From a site near Annapolis, this wine shows a preponderance of dark grape and cherry flavor interwoven with cinnamon and black peppercorn..."* received a sentiment score of approximately **-0.1**, which is slightly negative. I do not think that adds much value to the model's predictive power.
+
+This suggests that sentiment analysis may not be a particularly useful feature for predicting wine origin in this case, as it doesn't seem to correlate well with the outcome. The subjective nature of wine descriptions may lead to inconsistent sentiment scores that don't add significant predictive power to the model.
+
+
 ### 3.3 LLM Integration
+
+Integrating NLP into the model has shown promise in improving performance by leveraging the wine descriptions. These descriptions provide valuable insights into the wine's properties, which can enhance the model's ability to predict its origin.
+
+Large Language Models (LLMs) are powerful tools, as they are trained on vast amounts of knowledge and can generate context-rich insights. However, calling an LLM is expensive and time-consuming, making it less practical to use repeatedly on large datasets.
+
+To mitigate this, I saved the LLM's responses to a CSV file after each call, ensuring that I did not re-run the LLM for the same wine description. Writing to the CSV file also allows for saved data, providing protection in case the program crashes, ensuring that previous responses are not lost.
+
+I will explore three approaches to incorporate the LLM:
+1. **Baseline Model**: Ask the LLM to predict the wine's origin based on the description and details alone, without using the local model.
+2. **LLM-guided Text Vectorisation**: Use the LLM to reduce the features to the most relevant ones for predicting the wine's origin.
+3. **Feature Extraction**: Extract additional features from the LLM (such as missing attributes) and feed them into the Random Forest model for improved predictions.
+
+#### 3.3.1 LLM-Only Predictions
+
+Given that the LLM model is based on GPT, I hypothesised that it might offer valuable insights into predicting the wine's country of origin. I provided it with all available details—Description, Points, and Price—and asked it to predict which of the four countries the wine was most likely from.
+
+To implement this, I created a new class called `LLMClassifier.py`, which allowed me to query the model directly for predictions without requiring any prior training. The model was asked to predict the country of origin for each wine using the following prompt:
+
+**Prompt to the LLM**:  
+"Predict the country of origin for this wine:  
+- **Description**: '[Wine Description]'  
+- **Price**: [Wine Price], **Rating**: [Wine Points]/100, **Variety**: '[Wine Variety]'.  
+- **Possible countries**: [France, Italy, Spain, US].  
+- Respond with the country's name as a single word."
+
+I ran this model on the entire dataset of 1000 wines, making this experiment the one with the largest test set. The results were:
+
+- **Overall Accuracy**: 72.8% (728/1000 correct)
+- **Weighted F1-Score**: 75%
+
+**Per-Country Accuracy**:
+
+| Actual Country | Accuracy    |
+|----------------|-------------|
+| France         | 88.72%      |
+| Italy          | 83.91%      |
+| Spain          | 88.73%      |
+| US             | 64.47%      |
+
+The LLM performed reasonably well, yielding better results than the baseline model. However, it did not outperform TF-IDF Vectorisation (which achieved 78% accuracy). 
+
+One possible explanation for this is that the LLM was only given the wine's description, points, and price, without utilising other features or any training. In contrast, TF-IDF Vectorisation incorporated the entire dataset and was trained specifically for the task, which likely provided an advantage in feature extraction and prediction accuracy.
+
+So far, it seems that the time and cost associated with using the LLM do not justify the performance gains in this case.
+
+
+#### 3.3.2 LLM-guided Text Vectorisation
+
+TF-IDF Vectorisation had been the most effective technique so far, achieving solid results. To improve the model further, I sought to ensure the words used were more relevant to the context of wine. Since TF-IDF worked best with around **500** selected words (columns), I decided to incorporate LLM-guided filtering to focus on wine-related features.
+
+To achieve this, I used the LLM to identify and extract relevant words for each wine description. These words were saved in a file called `wine_features_1000.csv`. Once the words were filtered, I applied TF-IDF vectorisation on the cleaned dataset.
+
+Initially, I tested this approach on a subset of 10 wines. Compared to the original method, LLM filtering reduced the features from **180** to just **108**. 
+
+After performing the process on the entire dataset, the model produced the following results:
+
+- **Test Accuracy**: 80%
+- **Weighted F1-Score**: 77%
+
+| **Actual / Predicted** | **France** | **Italy** | **Spain** | **US** |
+|------------------------|------------|-----------|-----------|--------|
+| **France**             | 6          | 0         | 0         | 9      |
+| **Italy**              | 0          | 13        | 0         | 5      |
+| **Spain**              | 0          | 1         | 1         | 4      |
+| **US**                 | 0          | 0         | 1         | 60     |
+
+This approach yielded a slight improvement over the baseline TF-IDF Vectorisation (which had an accuracy of 78%), but it took significantly longer to run.
+
+Here are some of the most common words extracted:
+
+| **Relevant Words**     |
+|------------------------|
+| **'fruit', 'cherry', 'dry', 'oak', 'black', 'sweet'** |
+
+By leveraging the LLM, the extracted words were more relevant to the context of wine, which likely contributed to the model's improved performance. However, the added time cost may limit its practical use for larger datasets.
+
+
+#### 3.3.3 Using LLM for Feature Extraction
+
+Foo
+
