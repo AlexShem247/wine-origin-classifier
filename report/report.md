@@ -2,7 +2,7 @@
 
 **Name**: Alexander Shemaly
 
-**Date**: 3rd December 2024
+**Date**: 4rd December 2024
 
 ## Table of Contents
 1. [Introduction](#1-introduction)
@@ -14,8 +14,10 @@
    1. [Predictive Modeling Using Quantitative Data](#31-predictive-modeling-using-quantitative-data)
    2. [NLP for Textual Feature Extraction](#32-nlp-for-textual-feature-extraction)
    3. [LLM Integration](#33-llm-integration)
-4. [Challenges and Considerations](#4-challenges-and-considerations)
-5. [Conclusion](#5-conclusion)
+4. [Conclusion](#4-conclusion)
+   1. [4.1 Best Technique](#41-best-technique)
+   2. [4.2 Thoughts on Results](#42-thoughts-on-results)
+5. [Challenges and Next Steps](#5-challenges-and-next-steps)
 
 ## 1. Introduction
 
@@ -29,7 +31,7 @@ This report outlines the approach taken to preprocess the data, handle the chall
 The dataset includes five columns: **Country**, **Description**, **Points**, **Price**, and **Variety**:
 
 - **Country**: The target variable, representing the country of origin of the wine. It can be one of four categories: **US**, **Spain**, **France**, or **Italy**.
-- **Description**: A plain-text description of the wine, typically containing 30-40 words. This field provides details about the wine’s characteristics, flavors, and other sensory attributes.
+- **Description**: A plain-text description of the wine, typically containing 30-40 words. This field provides details about the wine's characteristics, flavors, and other sensory attributes.
 - **Points**: An integer value representing the average review score of the wine on a scale of 1-100.
 - **Price**: An integer value indicating the cost of a bottle of wine.
 - **Variety**: A string representing the type of grape used to make the wine. This is a categorical feature with several possible values.
@@ -65,9 +67,9 @@ The following wine features could help identify the country of origin of the win
 
 - **Texture and Body**: Descriptors such as *light-bodied*, *full-bodied*, and *tannic* reveal the wine's weight and texture.
 
-- **Acidity and Sweetness**: Words like *high acidity* and *dry* convey the wine’s freshness and sugar content.
+- **Acidity and Sweetness**: Words like *high acidity* and *dry* convey the wine's freshness and sugar content.
 
-- **Aging and Ageability**: Phrases like *ready to drink* or *needs aging* describe the wine’s maturity and aging potential.
+- **Aging and Ageability**: Phrases like *ready to drink* or *needs aging* describe the wine's maturity and aging potential.
 
 - **Terroir and Region**: Terms such as *coastal* or *volcanic* point to the influence of the wine's origin and terroir.
 
@@ -93,8 +95,8 @@ Finally, I will integrate **Large Language Models (LLM)** to extract relevant fe
 
 In this phase, I will build a predictive model using the existing quantitative features: **Points**, **Price**, and **Variety**. This will establish a baseline model to predict the **country of origin** of the wine and assess what can be achieved with the current data.
 
-- **Points**: While representing the wine’s average review score, this feature may not strongly predict the country of origin, as wines from different regions can receive similar ratings.
-- **Price**: Although it provides insight into the wine’s cost, price can vary widely across regions and may not effectively differentiate between countries.
+- **Points**: While representing the wine's average review score, this feature may not strongly predict the country of origin, as wines from different regions can receive similar ratings.
+- **Price**: Although it provides insight into the wine's cost, price can vary widely across regions and may not effectively differentiate between countries.
 - **Variety**: This feature is likely to be a strong predictor, as certain grape varieties are strongly associated with specific regions. However, with 105 categories, **one-hot encoding** will be used to transform **Variety** into binary columns.
 
 #### 3.1 Choice of Model
@@ -233,7 +235,7 @@ These words highlight the general characteristics of the wine, such as its flavo
 
 Next, I experimented with a different text feature extraction technique called TF-IDF (Term Frequency-Inverse Document Frequency) Vectorisation. TF-IDF adjusts the importance of words based on how frequently they appear in a document (term frequency) and how rare they are across the entire dataset (inverse document frequency). This helps down-weight common words that are less informative and emphasise more unique words.
 
-I implemented TF-IDF using `TfidfVectorizer` from `sklearn.feature_extraction.text`. Just as with the Bag of Words model, I also removed stop words during this step to ensure that common, non-informative words didn’t negatively impact the model’s performance.
+I implemented TF-IDF using `TfidfVectorizer` from `sklearn.feature_extraction.text`. Just as with the Bag of Words model, I also removed stop words during this step to ensure that common, non-informative words didn't negatively impact the model's performance.
 
 After training the model, I obtained the following results:
 - **Test Accuracy**: 78%
@@ -339,7 +341,7 @@ By leveraging the LLM, the extracted words were more relevant to the context of 
 
 #### 3.3.3 Using LLM for Feature Extraction
 
-Instead of adding a large number of columns representing the top 500 most used words, I aimed to extract more meaningful features that could help predict the origin of the wine. To achieve this, I utilized a Large Language Model (LLM) to read the wine descriptions and identify relevant details that could be useful for classification.
+Instead of adding a large number of columns representing the top 500 most used words, I aimed to extract more meaningful features that could help predict the origin of the wine. To achieve this, I utilised a Large Language Model (LLM) to read the wine descriptions and identify relevant details that could be useful for classification.
 
 After conducting some research into the wine industry and examining the descriptions provided in the dataset, I came up with 24 features that might be valuable for the model. Here are some of these features (you can find the complete list and the code in `LLMFeatureExtractor.py`):
 
@@ -354,7 +356,7 @@ After conducting some research into the wine industry and examining the descript
 - **Color**: ["pale", "deep", "ruby", "garnet", "golden", "straw", "amber"]
 - **Style**: ["traditional", "modern", "natural", "organic", "biodynamic"]
 
-I implemented these features using a new class in `LLMFeatureExtractor.py`. This class analyzed each wine description and extracted the presence of the listed features. It then appended the extracted features to the CSV file, ensuring robustness by saving the results incrementally. For efficiency, I only ran the extraction for 500 entries, as the process took considerable time.
+I implemented these features using a new class in `LLMFeatureExtractor.py`. This class analysed each wine description and extracted the presence of the listed features. It then appended the extracted features to the CSV file, ensuring robustness by saving the results incrementally. For efficiency, I only ran the extraction for 500 entries, as the process took considerable time.
 
 #### Output
 
@@ -443,7 +445,7 @@ After extracting the features, I ran the Random Forest model with the new featur
 | **US**                 | 1          | 3         | 0         | 27     |
 
 
-These results were below the baseline, which is concerning. Upon closer examination, I realized that the model might have struggled with the missing values in the dataset.
+These results were below the baseline, which is concerning. Upon closer examination, I realised that the model might have struggled with the missing values in the dataset.
 
 #### Data Preprocessing Adjustments
 
@@ -490,3 +492,42 @@ The model's performance was affected by missing values, but after addressing thi
 
 Additionally, Random Forest might not be the best model for this task. Exploring more complex models, such as neural networks, could offer better results. Further hyperparameter tuning of the Random Forest could also help optimise performance. Finally, evaluating the feature importance might shed light on which features are genuinely contributing to the classification, helping refine the feature extraction process moving forward.
 
+### 4. Conclusion
+
+In this experiment, we explored a range of techniques to enhance the wine origin classifier's performance by leveraging additional features and NLP-based approaches.
+
+The **grape variety** emerged as the most influential single feature, yielding an accuracy of **71%** after applying hyperparameter tuning and cross-validation. Building on this, we incorporated NLP techniques like Bag of Words and TF-IDF, which demonstrated that focusing on relevant words in the wine descriptions significantly improved the model. Removing stop words boosted performance from **74%** to **78%**, and leveraging an LLM to filter key terms further increased accuracy to **80%**. Sentiment analysis, however, showed minimal impact.
+
+We also experimented with **LLM-only predictions**, achieving **72.8%** accuracy without any reliance on other dataset features. While respectable, this was lower than the combined approaches. Lastly, using the LLM for **feature extraction** to identify domain-specific attributes resulted in a model accuracy of **66%** (without points, price, and variety) and **72%** when combined with all features, indicating limited incremental benefit from these features.
+
+### 4.1 Best Technique
+
+The best-performing method, achieving **80% accuracy** on a test set of 100 wines, was:
+
+1. Extracting the most relevant words from descriptions using the LLM's judgment.  
+2. Reducing the dimensionality by selecting the **top 500 most frequent terms** and applying TF-IDF.  
+3. Combining this data with existing features like points, price, and variety.  
+4. Training a Random Forest classifier with hyperparameter tuning and cross-validation.
+
+### 4.2 Thoughts on Results
+
+The wine descriptions proved to be a surprisingly rich source of information for classification. Current NLP techniques are highly effective, and integrating LLMs added value, particularly for filtering and feature selection. However, the LLM-based feature extraction process fell short of expectations in terms of model performance relative to the time investment required for querying.
+
+While the final model performed well, I believe its **80% accuracy** may be inflated by the dataset's imbalance favoring US wines. This imbalance could mean the model performs worse on non-US wines. Despite this, I am satisfied with the results and the insights gained from exploring both traditional NLP methods and the capabilities of LLMs.
+
+## 5. Challenges and Next Steps
+
+1. **Data Imbalance**:  
+   The dataset is skewed towards wines from certain countries, particularly the U.S., which negatively impacted the model's ability to generalise to wines from underrepresented countries. This imbalance led to lower performance for the model when predicting wines from non-U.S. origins. A potential solution is to acquire a more balanced dataset or apply data augmentation techniques, such as oversampling or undersampling, to ensure a more even distribution across the wine origins.
+
+
+2. **LLM Query Time**:  
+   A major bottleneck in the process was the time spent querying the LLM for each row of the dataset. With larger datasets, this could become even more prohibitive, as the LLM was called multiple times per row. A solution could involve batch processing, reducing redundant queries, or caching previously queried results to speed up the process.
+
+
+3. **Excessive and Irrelevant Features**:  
+   The LLM model included words like “wine” and “acidity” in the feature set, which as they are related to the general context of wine (which is what I asked) but do not provide valuable insights about the wine’s origin. Implementing harsher filtering techniques and better LLM prompts before applying models like TF-IDF could help remove such terms and focus the model on more meaningful, context-specific words that contribute to distinguishing the wine's origin.
+
+
+4. **Model Limitations with Static Data**:  
+   Using a static model, like `gpt-4o-mini` for wine origin prediction, which lacks the ability to update dynamically, limits the potential for incorporating real-time data. For example, if a model could connect to the internet and access up-to-date information on wine regions or wineries, once it sees a name in the wine description. A future direction could involve building a model capable of querying real-time resources (e.g., web scraping or integrating APIs) to gain contextual insights like country-specific information or recent wine industry trends.
