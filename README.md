@@ -2,6 +2,8 @@
 
 This repository contains code and data for classifying the country of origin of wine and using machine learning models to predict wine it based on different features. It includes data processing, machine learning, and feature extraction using LLMs (Large Language Models). The project utilises various data sources, such as wine descriptions and quality scores, to build predictive models.
 
+The detailed report on the project, including methodology, results, and code explanations, is available [here](https://github.com/AlexShem247/wine-origin-classifier/blob/main/report/report.pdf).
+
 ## Directory Structure
 
 ```plaintext
